@@ -1,2 +1,117 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @plugin '@tailwindcss/typography';
+
+@font-face {
+  font-family: "Hacker";
+  src: url("/fonts/MadHacker-Yjz8.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  outline: none;
+  box-sizing: border-box !important;
+}
+
+:root {
+  --terminal-light-green: hsl(141, 100%, 70%);
+  --terminal-green: hsl(141, 100%, 50%);
+  --terminal-dark-green: hsl(141, 100%, 23%);
+  --color-info: #3f82df;
+}
+
+body {
+  background-color: black;
+  color: var(--terminal-green);
+  font-family: Inter, sans-serif;
+}
+
+.mono {
+  font-family: monospace !important;
+}
+
+h1 {
+  font-family: "Hacker", monospace;
+  color: var(--terminal-light-green);
+
+  text-shadow: 0 0 5px var(--terminal-green),
+    0 0 0.2em var(--terminal-dark-green);
+}
+
+:where(input) {
+  background-color: black;
+  color: var(--terminal-green);
+
+  border: 1px solid var(--terminal-dark-green);
+
+  @apply py-4 px-6;
+}
+
+input::placeholder {
+  color: var(--terminal-dark-green);
+  opacity: 1;
+}
+
+input:focus {
+  outline: none;
+  border: 1px solid var(--terminal-green);
+  box-shadow: 0 0 8px var(--terminal-green);
+}
+
+button {
+  cursor: pointer;
+  @apply rounded-none;
+  text-shadow: 0px 0px 5px black;
+}
+
+:where(.btn) {
+  color: white;
+  --s: 3px;
+
+  background: linear-gradient(
+        90deg,
+        var(--terminal-dark-green) 50%,
+        transparent 0
+      )
+      0 0 / var(--s) var(--s),
+    linear-gradient(var(--terminal-dark-green) 50%, transparent 0) 0 0 /
+      var(--s) var(--s),
+    black;
+
+  @apply py-4 px-6 uppercase;
+}
+
+:where(.btn):hover,
+:where(.btn):focus-visible {
+  outline: 1px solid var(--terminal-green);
+}
+
+.blink {
+  animation-name: blink-anime;
+  animation-duration: 1s;
+  animation-timing-function: step-end;
+  animation-iteration-count: infinite;
+}
+
+/* 2. Define the keyframes */
+@keyframes blink-anime {
+  /* The animation starts (0%) with the element visible */
+  0% {
+    visibility: visible;
+  }
+  50% {
+    /* Use 50% to ensure the element is visible for half the duration (0.5s) */
+    visibility: hidden;
+  }
+  100% {
+    /* Ensure it's hidden before repeating */
+    visibility: hidden;
+  }
+}

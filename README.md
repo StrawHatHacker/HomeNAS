@@ -1,38 +1,13 @@
-# sv
+### Hop along as I build my home NAS server.
+This is probably not something you shouldn't use, and in fact I wonder
+why I'm making it myself when there are working solutions out there.
+The answer is: because I want to, and it will be a fun project that
+I can bring up at a party for clout. Not that I get invited to parties but you get the idea. 
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+This will give me the opportunity to work on something more hands-on instead of making websites all the time!
 
-## Creating a project
+#### Technologies
+> Sveltekit, sqlite, docker
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+#### Contributions
+> Please don't hack me
