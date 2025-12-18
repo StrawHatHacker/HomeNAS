@@ -75,7 +75,7 @@ export const initDB = async () => {
             const adminDirExists = checkIfUserDirExists(user.name);
             if (!adminDirExists) createUserDir(u.id, user.name);
 
-            await NAS.createRootFolder(user.name);
+            await NAS.createUserFolders(user.name);
         });
     } catch (error) {
         if (error instanceof Error) console.error(error.message);

@@ -31,6 +31,7 @@ body {
   background-color: black;
   color: var(--terminal-green);
   font-family: Inter, sans-serif;
+  font-size: 18px;
 }
 
 .mono {
@@ -67,31 +68,18 @@ input:focus {
 
 button {
   cursor: pointer;
-  @apply rounded-none;
-  text-shadow: 0px 0px 5px black;
 }
 
-:where(.btn) {
-  color: white;
-  --s: 3px;
-
-  background: linear-gradient(
-        90deg,
-        var(--terminal-dark-green) 50%,
-        transparent 0
-      )
-      0 0 / var(--s) var(--s),
-    linear-gradient(var(--terminal-dark-green) 50%, transparent 0) 0 0 /
-      var(--s) var(--s),
-    black;
-
-  @apply py-4 px-6 uppercase;
+.btn {
+  backdrop-filter: blur(2px);
+  @apply px-6 py-4;
+  border: 1px solid var(--terminal-green);
 }
 
-:where(.btn):hover,
+/* :where(.btn):hover,
 :where(.btn):focus-visible {
   outline: 1px solid var(--terminal-green);
-}
+} */
 
 .blink {
   animation-name: blink-anime;
@@ -114,4 +102,11 @@ button {
     /* Ensure it's hidden before repeating */
     visibility: hidden;
   }
+}
+
+#terminal {
+  max-width: 600px;
+  border: 1px solid var(--terminal-dark-green);
+  @apply py-4 px-6;
+  backdrop-filter: blur(2px);
 }
