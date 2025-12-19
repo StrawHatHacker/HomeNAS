@@ -1,3 +1,6 @@
+> [!WARNING]  
+> Strong language, Profanity, Graphic violence against home servers, Hate speech against web frameworks that are not SvelteKit, Partial nudity of PCBs, Promotion of alchohol (we love beer), Horrid horror.
+
 ### Hop along as I build my home NAS server.
 This is probably not something you shouldn't use, and in fact I wonder
 why I'm making it myself when there are working solutions out there.
