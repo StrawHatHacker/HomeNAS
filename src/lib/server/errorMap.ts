@@ -1,5 +1,6 @@
 export const errorMap = {
-    tooManyRequests: 'Too many requests',
-    goAway: 'Go away',
-    invalidEmail: 'Can\'t even type an email properly? Fucking idiot.',
+    tooManyRequests: 'The API\'s pukin\' its guts out tryin\' to keep up wi\' yer shite requests, ya digital seagull screechin\' for scraps. Piss off back tae yer cave o\' incompetence afore I throttle yer connection wi\' the cords o\' yer own uselessness.',
+    goAway: 'Yer API requests are aboot as useful as a chocolate teapot, and yer existence is a bigger waste o\' bandwidth than a dial-up modem tryin\' tae stream 4K. Now take yer half-arsed, poorly formatted requests and choke on \'em - the world\'ll be a better place when yer IP gets dumped intae the void where useless cunts like ye belong.',
+    invalidEmail: 'Congratulations. You\'ve officially achieved the evolutionary sophistication of a moldy potato left in a dumpster. The fact that you can\'t even type an email is a testament to your lack of intelligence. You\'re not just a failure at typing; you\'re a walking, breathing monument to mediocrity. Please, do humanity a favor and let your next attempt at communication be a suicide note.',
+    invalidCode: 'Listen here ya daft wee shite-stain, I\'ve seen more brains in a deep-fried Mars bar than whatever rancid lump of fuck-all yer callin\' a heid. Yer maw should\'ve swallowed ye—nae, scrap that, even her fallopian tubes would\'ve spat ye oot in disgust. Yer existence is a cosmic joke so pitiful that the universe itself apologised for shitting ye oot. Come back when yer sperm donor\'s finished sobbing into his Buckfast, ye absolute waste of carbon.',
 } as const;

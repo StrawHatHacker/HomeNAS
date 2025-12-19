@@ -1,8 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { isRateLimited } from '$lib/server/providers/utils/rateLimit';
+import { isRateLimited } from '$lib/server/utils/rateLimit';
 import { errorMap } from '$lib/server/errorMap';
-import { getClientIp } from '$lib/server/providers/utils/getClientIP';
+import { getClientIp } from '$lib/server/utils/getClientIP';
 import * as Queries from '$lib/server/queries';
 import type { DataOrErr } from '$lib/types';
 import { sendOneTimePassEmail } from '$lib/server/providers/emailer';
@@ -11,10 +11,11 @@ import { Auth } from '$lib/server/auth';
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     const ip = getClientIp(request, getClientAddress);
     const body = await request.json();
+    
     console.info(`Someone tried to login from ${ip} with email: ${body['email']}`);
-
-    // const isLimited = isRateLimited(ip, { strict: true });
-    // if (isLimited) return error(429, errorMap.tooManyRequests);
+    
+    const isLimited = isRateLimited(ip, { strict: true });
+    if (isLimited) return error(429, errorMap.tooManyRequests);
 
     const validatedBody = validateBody(body);
     if (!validatedBody.ok) return error(400, validatedBody.error);

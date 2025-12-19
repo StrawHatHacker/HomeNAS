@@ -1,7 +1,5 @@
-import { ADMIN_EMAIL, ADMIN_NAME } from "$env/static/private";
 import type { User } from "$lib/types";
 import { db } from "./providers/db";
-import { NAS } from "./providers/nas";
 
 const upsertUserQuery = db.prepare(
     `INSERT INTO users (name, email, created_at) 
@@ -22,6 +20,14 @@ const createAuthCodeQuery = db.prepare(
     `INSERT INTO temp_auth_codes (user_id, code, created_at)
     VALUES ( $user_id, $code, $created_at)`);
 
+const getValidCodeQuery = db.prepare(`SELECT id FROM temp_auth_codes WHERE code = $code AND user_id = $user_id LIMIT 1`);
+
+const deleteCodesByUserIdQuery = db.prepare(`DELETE FROM temp_auth_codes WHERE user_id = $id`);
+
+const createSessionQuery = db.prepare(
+    `INSERT INTO sessions (user_id, token, created_at)
+    VALUES ($user_id, $token, datetime('now'))`);
+
 export const createAuthCode = (user_id: number, code: string) => {
     return createAuthCodeQuery.run({ user_id, code, created_at: Date.now() });
 }
@@ -40,4 +46,16 @@ export const createUserDir = (user_id: number, name: string) => {
 
 export const getUserByEmail = (email: string) => {
     return getUserByEmailQuery.get({ email }) as User;
+}
+
+export const getValidCode = (code: string, user_id: number) => {
+    return getValidCodeQuery.get({ code, user_id }) as { id: number };
+}
+
+export const deleteCodesByUserId = (id: number) => {
+    return deleteCodesByUserIdQuery.run({ id });
+}
+
+export const createSession = (user_id: number, token: string) => {
+    return createSessionQuery.run({ user_id, token });
 }

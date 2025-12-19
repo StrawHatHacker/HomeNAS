@@ -4,7 +4,7 @@ type RateLimitEntry = {
 };
 
 const RATE_LIMIT = 20;        // requests
-const RATE_LIMIT_STRICT = 1;  // requests
+const RATE_LIMIT_STRICT = 2;  // requests
 const WINDOW_MS = 60_000;     // per minute
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
