@@ -4,15 +4,19 @@ import { isRateLimited } from "$lib/server/utils/rateLimit";
 import type { DataOrErr } from "$lib/types";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import * as Queries from "$lib/server/queries";
+import { Auth } from "$lib/server/auth";
+import { PUBLIC_ENV } from "$env/static/public";
 
-export const POST: RequestHandler = async ({ request, getClientAddress }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress, cookies }) => {
     const ip = getClientIp(request, getClientAddress);
     const body = await request.json();
 
     console.info(`Someone sent code from ${ip} with email: ${body['email']} & code: ${body['code']}`);
 
-    const isLimited = isRateLimited(ip, { strict: true });
-    if (isLimited) return error(429, errorMap.tooManyRequests);
+    if (PUBLIC_ENV !== 'DEV') {
+        const isLimited = isRateLimited(ip, { strict: true });
+        if (isLimited) return error(429, errorMap.tooManyRequests);
+    }
 
     const validatedBody = validateBody(body);
     if (!validatedBody.ok) return error(400, validatedBody.error);
@@ -26,10 +30,17 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
     Queries.deleteCodesByUserId(user.id);
 
-    
-    // Queries.createSession(user.id);
+    const sessionToken = await Auth.createSessionToken(user.id);
+    console.info(`User ${user.name} (${user.email}) logged in.`);
 
-    return json(200, {});
+    cookies.set('sessionToken', sessionToken, {
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 60 * 24,
+    });
+
+    return json({});
 }
 
 const validateBody = (body: any): DataOrErr<{ code: string, email: string }, string> => {

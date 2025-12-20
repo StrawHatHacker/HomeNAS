@@ -7,15 +7,18 @@ import * as Queries from '$lib/server/queries';
 import type { DataOrErr } from '$lib/types';
 import { sendOneTimePassEmail } from '$lib/server/providers/emailer';
 import { Auth } from '$lib/server/auth';
+import { PUBLIC_ENV } from '$env/static/public';
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     const ip = getClientIp(request, getClientAddress);
     const body = await request.json();
-    
+
     console.info(`Someone tried to login from ${ip} with email: ${body['email']}`);
-    
-    const isLimited = isRateLimited(ip, { strict: true });
-    if (isLimited) return error(429, errorMap.tooManyRequests);
+
+    if (PUBLIC_ENV !== 'DEV') {
+        const isLimited = isRateLimited(ip, { strict: true });
+        if (isLimited) return error(429, errorMap.tooManyRequests);
+    }
 
     const validatedBody = validateBody(body);
     if (!validatedBody.ok) return error(400, validatedBody.error);
@@ -27,7 +30,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     const randomCode = Auth.random();
 
     Queries.createAuthCode(user.id, randomCode);
-    await sendOneTimePassEmail(validatedBody.data.email, randomCode);
+    PUBLIC_ENV !== 'DEV' && await sendOneTimePassEmail(validatedBody.data.email, randomCode);
 
     return json(200, {});
 };

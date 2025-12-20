@@ -34,14 +34,17 @@
   const verifyCode = async () => {
     messageDisplay = "";
     if (code == "") return;
+
     try {
       const res = await fetch("/api/auth/verifyCode", {
         method: "POST",
         body: JSON.stringify({ email, code }),
       });
-      const body = await res.json();
 
-      if (!res.ok) throw new Error(body.message);
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.message);
+      }
 
       window.location.href = "/dashboard";
     } catch (error) {
