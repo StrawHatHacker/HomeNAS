@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ROUTES } from "$lib/types";
   import Checkbox from "$lib/widgets/checkbox.svelte";
   import FancyButton from "$lib/widgets/fancyButton.svelte";
   import Matrix from "$lib/widgets/matrix.svelte";
@@ -38,7 +39,7 @@
     try {
       const res = await fetch("/api/auth/verifyCode", {
         method: "POST",
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, code, deletePreviousSessions }),
       });
 
       if (!res.ok) {
@@ -46,7 +47,7 @@
         throw new Error(body.message);
       }
 
-      window.location.href = "/dashboard";
+      window.location.href = ROUTES.files;
     } catch (error) {
       if (error instanceof Error && error.message != "")
         return (messageDisplay = error.message);
@@ -86,7 +87,8 @@
         <input
           id="nas-email"
           type="email"
-          placeholder="E-MAIL ADDRESS"
+          placeholder="E-MAIL"
+          autocomplete="section-nas username"
           bind:value={email}
         />
         <FancyButton text="REQUEST CODE" onclick={sendCodeWithEmail} />

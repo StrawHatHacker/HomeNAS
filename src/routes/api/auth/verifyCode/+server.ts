@@ -1,7 +1,7 @@
 import { errorMap } from "$lib/server/errorMap";
 import { getClientIp } from "$lib/server/utils/getClientIP";
 import { isRateLimited } from "$lib/server/utils/rateLimit";
-import type { DataOrErr } from "$lib/types";
+import { COOKIES, type DataOrErr } from "$lib/types";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import * as Queries from "$lib/server/queries";
 import { Auth } from "$lib/server/auth";
@@ -28,12 +28,18 @@ export const POST: RequestHandler = async ({ request, getClientAddress, cookies 
     const validCode = Queries.getValidCode(validatedBody.data.code, user.id);
     if (!validCode) return error(404, errorMap.invalidCode);
 
+    // Cleanup previous attempts
     Queries.deleteCodesByUserId(user.id);
 
+    if (validatedBody.data.deletePreviousSessions) {
+        // TODO implement
+    }
+
     const sessionToken = await Auth.createSessionToken(user.id);
+    Queries.createSession(user.id, sessionToken);
     console.info(`User ${user.name} (${user.email}) logged in.`);
 
-    cookies.set('sessionToken', sessionToken, {
+    cookies.set(COOKIES.session, sessionToken, {
         path: '/',
         httpOnly: true,
         secure: true,
@@ -43,10 +49,11 @@ export const POST: RequestHandler = async ({ request, getClientAddress, cookies 
     return json({});
 }
 
-const validateBody = (body: any): DataOrErr<{ code: string, email: string }, string> => {
+const validateBody = (body: any): DataOrErr<{ code: string, email: string, deletePreviousSessions: boolean }, string> => {
     if (!body || typeof body !== 'object') return { ok: false, error: errorMap.goAway };
-    if (!body.code || typeof body.code !== 'string') return { ok: false, error: errorMap.invalidCode };
-    if (!body.email || typeof body.email !== 'string') return { ok: false, error: errorMap.invalidEmail };
+    if (!('code' in body) || typeof body.code !== 'string') return { ok: false, error: errorMap.invalidCode };
+    if (!('email' in body) || typeof body.email !== 'string') return { ok: false, error: errorMap.invalidEmail };
+    if (!('deletePreviousSessions' in body) || typeof body.deletePreviousSessions !== 'boolean') return { ok: false, error: errorMap.goAway };
 
     return { ok: true, data: body };
 }

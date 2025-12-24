@@ -11,3 +11,12 @@ export type Either<T, U> = Only<U, T> | Only<T, U>;
 export type DataOrErr<T, E> =
     | { ok: true; data: T }
     | { ok: false; error: E };
+
+export const COOKIES =  {
+    session: 'session',
+} as const;
+
+export const ROUTES = {
+    home: '/',
+    files: '/u/files',
+} as const;

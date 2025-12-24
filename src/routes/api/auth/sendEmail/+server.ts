@@ -29,6 +29,10 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
     const randomCode = Auth.random();
 
+    // Cleanup previous attempts
+    Queries.deleteCodesByUserId(user.id);
+
+    // Create a new temporary auth code row to check against in the next step of the flow
     Queries.createAuthCode(user.id, randomCode);
     PUBLIC_ENV !== 'DEV' && await sendOneTimePassEmail(validatedBody.data.email, randomCode);
 
@@ -37,8 +41,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
 const validateBody = (body: any): DataOrErr<{ email: string }, string> => {
     if (!body || typeof body !== 'object') return { ok: false, error: errorMap.goAway };
-
-    if (!body.email || typeof body.email !== 'string') return { ok: false, error: errorMap.invalidEmail };
+    if (!('email' in body)|| typeof body.email !== 'string') return { ok: false, error: errorMap.invalidEmail };
 
     return { ok: true, data: body };
 }

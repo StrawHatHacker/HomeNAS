@@ -1,3 +1,5 @@
+<!-- CREDIT: https://codepen.io/codelyds/pen/dPGXXZW -->
+
 <script lang="ts">
   import { onMount } from "svelte";
 

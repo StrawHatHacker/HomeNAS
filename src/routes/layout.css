@@ -8,13 +8,6 @@
   font-style: normal;
 }
 
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-}
-
 * {
   outline: none;
   box-sizing: border-box !important;
@@ -30,7 +23,7 @@
 body {
   background-color: black;
   color: var(--terminal-green);
-  font-family: Inter, sans-serif;
+  font-family: monospace, sans-serif;
   font-size: 18px;
 }
 

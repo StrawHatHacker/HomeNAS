@@ -20,13 +20,22 @@ const createAuthCodeQuery = db.prepare(
     `INSERT INTO temp_auth_codes (user_id, code, created_at)
     VALUES ( $user_id, $code, $created_at)`);
 
-const getValidCodeQuery = db.prepare(`SELECT id FROM temp_auth_codes WHERE code = $code AND user_id = $user_id LIMIT 1`);
+const getValidCodeQuery = db.prepare(
+    `SELECT id FROM temp_auth_codes 
+    WHERE code = $code AND user_id = $user_id AND created_at > datetime('now', '-2 minutes') LIMIT 1`);
 
 const deleteCodesByUserIdQuery = db.prepare(`DELETE FROM temp_auth_codes WHERE user_id = $id`);
 
 const createSessionQuery = db.prepare(
     `INSERT INTO sessions (user_id, token, created_at)
     VALUES ($user_id, $token, datetime('now'))`);
+
+const getSessionQuery = db.prepare(
+    `SELECT sessions.id, sessions.created_at, users.id as user_id, users.name, users.email, users.created_at as user_created_at
+    FROM sessions
+    JOIN users ON sessions.user_id = users.id
+    WHERE sessions.token = $token LIMIT 1`
+);
 
 export const createAuthCode = (user_id: number, code: string) => {
     return createAuthCodeQuery.run({ user_id, code, created_at: Date.now() });
@@ -58,4 +67,18 @@ export const deleteCodesByUserId = (id: number) => {
 
 export const createSession = (user_id: number, token: string) => {
     return createSessionQuery.run({ user_id, token });
+}
+
+export const getSession = (token: string) => {
+    const s = getSessionQuery.get({ token }) as any;
+    return {
+        id: s.id,
+        created_at: s.created_at,
+        user: {
+            id: s.user_id,
+            name: s.name,
+            email: s.email,
+            created_at: s.user_created_at
+        }
+    };
 }
