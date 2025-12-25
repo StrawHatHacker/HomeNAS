@@ -3,7 +3,7 @@ import { db } from "./providers/db";
 
 const upsertUserQuery = db.prepare(
     `INSERT INTO users (name, email, created_at) 
-        VALUES ($name, $email, $created_at)
+        VALUES ($name, $email, datetime('now'))
         ON CONFLICT(email) DO UPDATE SET 
             name = excluded.name  -- This "update" ensures a row is returned
         RETURNING id`);
@@ -12,13 +12,13 @@ const checkIfUserDirExistsQuery = db.prepare(`SELECT 1 FROM fs_entries WHERE par
 
 const createUserDirQuery = db.prepare(
     `INSERT INTO fs_entries (user_id, name, is_dir, created_at, modified_at)
-    VALUES ( $user_id, $name, 1, $created_at, $modified_at)`);
+    VALUES ( $user_id, $name, 1,  datetime('now'), datetime('now'))`);
 
 const getUserByEmailQuery = db.prepare(`SELECT id, name, email, created_at FROM users WHERE email = $email LIMIT 1`);
 
 const createAuthCodeQuery = db.prepare(
     `INSERT INTO temp_auth_codes (user_id, code, created_at)
-    VALUES ( $user_id, $code, $created_at)`);
+    VALUES ( $user_id, $code, datetime('now'))`);
 
 const getValidCodeQuery = db.prepare(
     `SELECT id FROM temp_auth_codes 
@@ -37,12 +37,14 @@ const getSessionQuery = db.prepare(
     WHERE sessions.token = $token LIMIT 1`
 );
 
+const deleteAllSessionsByUserIdQuery = db.prepare(`DELETE FROM sessions WHERE user_id = $id`);
+
 export const createAuthCode = (user_id: number, code: string) => {
-    return createAuthCodeQuery.run({ user_id, code, created_at: Date.now() });
+    return createAuthCodeQuery.run({ user_id, code });
 }
 
 export const upsertUser = (name: string, email: string) => {
-    return upsertUserQuery.get({ name, email, created_at: Date.now() }) as { id: number };
+    return upsertUserQuery.get({ name, email }) as { id: number };
 }
 
 export const checkIfUserDirExists = (name: string) => {
@@ -50,7 +52,7 @@ export const checkIfUserDirExists = (name: string) => {
 }
 
 export const createUserDir = (user_id: number, name: string) => {
-    return createUserDirQuery.run({ user_id, name, created_at: Date.now(), modified_at: Date.now() });
+    return createUserDirQuery.run({ user_id, name });
 }
 
 export const getUserByEmail = (email: string) => {
@@ -81,4 +83,8 @@ export const getSession = (token: string) => {
             created_at: s.user_created_at
         }
     };
+}
+
+export const deleteAllSessionsByUserId = (id: number) => {
+    return deleteAllSessionsByUserIdQuery.run({ id });
 }

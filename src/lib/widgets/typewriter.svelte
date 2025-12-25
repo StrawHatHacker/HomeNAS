@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { text = "", speed = 50 } = $props();
+  let { text = "", speed = 40 } = $props();
 
   let displayedText = $state("");
   let currentIndex = 0;

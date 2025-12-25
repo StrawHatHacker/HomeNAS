@@ -14,6 +14,7 @@
   const sendCodeWithEmail = async () => {
     messageDisplay = "";
     if (email == "") return;
+    
     try {
       const res = await fetch("/api/auth/sendEmail", {
         method: "POST",
@@ -61,10 +62,7 @@
 <main
   class="flex flex-col items-center justify-center gap-10 h-screen w-fit mx-auto"
 >
-  <h1
-    class="text-center flex flex-col tracking-tighter"
-    data-text="STAWHATHACKER::NAS"
-  >
+  <h1 class="text-center flex flex-col tracking-tighter">
     <span>strawhathacker's</span>
     <span>n.a.s.</span>
   </h1>
@@ -86,9 +84,11 @@
       <form class="flex gap-2 flex-col md:flex-row">
         <input
           id="nas-email"
+          name="nas-email"
           type="email"
-          placeholder="E-MAIL"
-          autocomplete="section-nas username"
+          placeholder="E-MAIL ADDRESS"
+          autocomplete="email"
+          inputmode="email"
           bind:value={email}
         />
         <FancyButton text="REQUEST CODE" onclick={sendCodeWithEmail} />
@@ -102,7 +102,7 @@
       />
       <div></div>
       <form class="flex gap-2 flex-col md:flex-row">
-        <input type="text" placeholder="ENTER CODE" bind:value={code} />
+        <input type="password" placeholder="ENTER CODE" bind:value={code} />
         <FancyButton text="VERIFY" onclick={verifyCode} />
       </form>
 

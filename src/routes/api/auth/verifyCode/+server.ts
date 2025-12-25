@@ -32,7 +32,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress, cookies 
     Queries.deleteCodesByUserId(user.id);
 
     if (validatedBody.data.deletePreviousSessions) {
-        // TODO implement
+        Queries.deleteAllSessionsByUserId(user.id);
     }
 
     const sessionToken = await Auth.createSessionToken(user.id);
