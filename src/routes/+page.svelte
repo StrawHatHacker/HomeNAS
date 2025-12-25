@@ -57,10 +57,14 @@
   };
 </script>
 
+<svelte:head>
+  <title>NAS</title>
+</svelte:head>
+
 <Matrix />
 
 <main
-  class="flex flex-col items-center justify-center gap-10 h-screen w-fit mx-auto"
+  class="flex flex-col items-center justify-center gap-10 h-screen w-fit mx-auto text-(--terminal-green)"
 >
   <h1 class="text-center flex flex-col tracking-tighter">
     <span>strawhathacker's</span>

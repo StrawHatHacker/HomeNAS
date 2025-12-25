@@ -18,17 +18,27 @@
   --terminal-green: hsl(141, 100%, 50%);
   --terminal-dark-green: hsl(141, 100%, 23%);
   --color-info: #3f82df;
+
+  --dark-grey: hsl(0, 0%, 12%);
+  --normal-grey: hsl(0, 0%, 20%);
+  --light-grey: hsl(0, 0%, 30%);
+  --lighter-grey: hsl(0, 0%, 40%);
+  --lighter-grey: hsl(0, 0%, 50%);
 }
 
 body {
   background-color: black;
-  color: var(--terminal-green);
+  color: white;
   font-family: monospace, sans-serif;
   font-size: 18px;
 }
 
 .mono {
   font-family: monospace !important;
+}
+
+.hacker {
+  font-family: "Hacker", monospace !important;
 }
 
 h1 {
@@ -64,17 +74,6 @@ input:focus {
 button {
   cursor: pointer;
 }
-
-.btn {
-  backdrop-filter: blur(2px);
-  @apply px-6 py-4;
-  border: 1px solid var(--terminal-green);
-}
-
-/* :where(.btn):hover,
-:where(.btn):focus-visible {
-  outline: 1px solid var(--terminal-green);
-} */
 
 .blink {
   animation-name: blink-anime;
