@@ -48,7 +48,7 @@
         throw new Error(body.message);
       }
 
-      window.location.href = ROUTES.files;
+      window.location.href = ROUTES.crypt;
     } catch (error) {
       if (error instanceof Error && error.message != "")
         return (messageDisplay = error.message);

@@ -5,8 +5,8 @@ import { NAS } from '$lib/server/providers/nas';
 import type { ServerInit } from '@sveltejs/kit';
 
 export const init: ServerInit = async () => {
-    initDB();
-    FileWatcher.initListeners();
+    // initDB();
+    // FileWatcher.initListeners();
 };
 
 export const initDB = async () => {
