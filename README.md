@@ -14,3 +14,6 @@ This will give me the opportunity to work on something more hands-on instead of 
 
 #### Contributions
 > Please don't hack me
+
+#### Credits
+[Heroicons](https://heroicons.com/)

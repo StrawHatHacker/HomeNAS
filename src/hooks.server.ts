@@ -5,8 +5,8 @@ import { NAS } from '$lib/server/providers/nas';
 import type { ServerInit } from '@sveltejs/kit';
 
 export const init: ServerInit = async () => {
-    // initDB();
-    // FileWatcher.initListeners();
+    initDB();
+    FileWatcher.initListeners();
 };
 
 export const initDB = async () => {
@@ -58,13 +58,16 @@ export const initDB = async () => {
                 UNIQUE (parent_id, name)
             )`).run();
 
+        // TODO we will see about these indexes
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_parent ON fs_entries(parent_id);`).run();
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_user ON fs_entries(user_id);`).run();
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_user_parent ON fs_entries(user_id, parent_id);`).run();
 
+        // Check if env vars are set (Admin has special priviledges)
         if (!ADMIN_EMAIL) throw new Error('env var ADMIN_EMAIL is not set');
         if (!ADMIN_NAME) throw new Error('env var ADMIN_NAME is not set');
 
+        // Adding users by hand to avoid developer mistakes
         const users = [{ name: ADMIN_NAME, email: ADMIN_EMAIL },] as const;
         const { checkIfUserDirExists, createUserDir, upsertUser } = await import('$lib/server/queries');
 
@@ -72,9 +75,11 @@ export const initDB = async () => {
             const u = upsertUser(user.name, user.email);
             if (!u) throw new Error('Failed to upsert user');
 
+            // Database operations
             const adminDirExists = checkIfUserDirExists(user.name);
             if (!adminDirExists) createUserDir(u.id, user.name);
 
+            // Filesystem operations
             await NAS.createUserFolders(user.name);
         });
     } catch (error) {

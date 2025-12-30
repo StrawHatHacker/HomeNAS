@@ -51,7 +51,7 @@ h1 {
   line-height: 100%;
 }
 
-:where(input) {
+:where(.hacker-input) {
   backdrop-filter: blur(2px);
   color: var(--terminal-green);
 
@@ -60,19 +60,38 @@ h1 {
   @apply py-4 px-6;
 }
 
-input::placeholder {
+.hacker-input::placeholder {
   color: var(--terminal-dark-green);
   opacity: 1;
 }
 
-input:focus {
+.hacker-input:focus {
   outline: none;
   border: 1px solid var(--terminal-green);
   box-shadow: 0 0 8px var(--terminal-green);
 }
 
+input {
+  border: 1px solid var(--light-grey);
+  @apply px-2 h-10 min-w-30 max-w-80 w-full;
+}
+
 button {
   cursor: pointer;
+}
+
+.btn-simple {
+  border: 1px solid var(--light-grey);
+  @apply flex items-center justify-center h-10 px-4;
+  transition: all 0.2s ease-in-out;
+
+  &.btn-square {
+    @apply aspect-square p-0;
+  }
+
+  &:hover {
+    background-color: var(--dark-grey);
+  }
 }
 
 .blink {

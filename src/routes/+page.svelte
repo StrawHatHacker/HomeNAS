@@ -88,6 +88,7 @@
       <form class="flex gap-2 flex-col md:flex-row">
         <input
           id="nas-email"
+          class="hacker-input"
           name="nas-email"
           type="email"
           placeholder="E-MAIL ADDRESS"
@@ -106,7 +107,7 @@
       />
       <div></div>
       <form class="flex gap-2 flex-col md:flex-row">
-        <input type="password" placeholder="ENTER CODE" bind:value={code} />
+        <input class="hacker-input" type="password" placeholder="ENTER CODE" bind:value={code} />
         <FancyButton text="VERIFY" onclick={verifyCode} />
       </form>
 
