@@ -2,6 +2,7 @@
   import { page } from "$app/state";
   import { ROUTES } from "$lib/types.js";
   import { isSidebarCollapsed, isMobileOpen } from "$lib/stores/sidebar";
+  import UploadingProgress from "$lib/widgets/uploadingProgress.svelte";
 
   let { data, children } = $props();
 
@@ -30,13 +31,15 @@
     page.url.pathname === href || page.url.pathname.startsWith(href + "/");
 </script>
 
+<UploadingProgress />
+
 <div class="flex h-screen overflow-hidden relative">
   <aside
     id="col-1"
-    class="flex flex-col h-full max-w-70 mask-x-to-yellow-900 border-r border-(--normal-grey) bg-black transition-all duration-300 ease-out z-50
-           fixed inset-y-0 left-0 md:relative md:translate-x-0"
+    class="flex flex-col h-full max-w-70 mask-x-to-yellow-900 border-r border-(--normal-grey) bg-black transition-all duration-300 ease-out z-50 fixed inset-y-0 left-0 md:relative md:translate-x-0"
     class:w-90={!$isSidebarCollapsed}
     class:w-20={$isSidebarCollapsed}
+    class:w-full={$isMobileOpen}
     class:translate-x-0={$isMobileOpen}
     class:-translate-x-full={!$isMobileOpen}
     class:!w-full={$isMobileOpen}

@@ -1,7 +1,23 @@
 <script lang="ts">
+  import { Uploader } from "$lib/stores/uploader.svelte";
   import WrapperHelper from "../wrapperHelper.svelte";
 
   let viewType = $state<"grid" | "list">("grid");
+  let BreadcrumbEntries = $state(["crypt", "test", "test2"]);
+
+  const onFilesAdded = async (files: FileList) => {
+    console.info("Trying to upload ", files.length, " files");
+
+    Uploader.addFiles(files, { encrypted: false });
+
+    // TODO figure out the breadcrumb and send it to the server and get them from the server
+  };
+
+  const navigateToDirFromBreadcrumb = (index: number) => {
+    console.log(index);
+
+    BreadcrumbEntries = BreadcrumbEntries.slice(0, index + 1);
+  };
 </script>
 
 {#snippet title()}
@@ -16,9 +32,9 @@
   </button>
 {/snippet}
 
-{#snippet content()}
+{#snippet content(openFileExplorer: () => void)}
   <div id="toolbar" class="w-full flex gap-2 items-stretch">
-    <button class="btn-simple btn-square shrink-0">
+    <button class="btn-simple btn-square shrink-0" onclick={openFileExplorer}>
       <img src="/icons/upload.svg" alt="" class="h-6 w-6" />
     </button>
     <button class="btn-simple btn-square shrink-0">
@@ -36,8 +52,20 @@
       />
     </button>
   </div>
+  <div id="breadcrumbs" class="flex gap-2 text-(--lighter-grey) text-sm py-4">
+    {#each BreadcrumbEntries as directory, i}
+      <button
+        onclick={() => navigateToDirFromBreadcrumb(i)}
+        class:hover:underline={i < BreadcrumbEntries.length - 1}
+        class:!cursor-default={i >= BreadcrumbEntries.length - 1}
+      >
+        {directory}
+      </button>
+      <span class:hidden={i === BreadcrumbEntries.length - 1}>/</span>
+    {/each}
+  </div>
 {/snippet}
 
-<WrapperHelper {title} {search} {content} />
+<WrapperHelper {title} {search} {content} {onFilesAdded} />
 
 <style></style>

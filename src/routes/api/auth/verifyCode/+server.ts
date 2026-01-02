@@ -1,5 +1,4 @@
 import { errorMap } from "$lib/server/errorMap";
-import { getClientIp } from "$lib/server/utils/getClientIP";
 import { isRateLimited } from "$lib/server/utils/rateLimit";
 import { COOKIES, type DataOrErr } from "$lib/types";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
@@ -8,16 +7,9 @@ import { Auth } from "$lib/server/auth";
 import { PUBLIC_ENV } from "$env/static/public";
 
 export const POST: RequestHandler = async ({ request, getClientAddress, cookies }) => {
-    const ip = getClientIp(request, getClientAddress);
+    Auth.checkRatelimit(request, getClientAddress, true);
+
     const body = await request.json();
-
-    console.info(`Someone sent code from ${ip} with email: ${body['email']} & code: ${body['code']}`);
-
-    if (PUBLIC_ENV !== 'DEV') {
-        const isLimited = isRateLimited(ip, { strict: true });
-        if (isLimited) return error(429, errorMap.tooManyRequests);
-    }
-
     const validatedBody = validateBody(body);
     if (!validatedBody.ok) return error(400, validatedBody.error);
 

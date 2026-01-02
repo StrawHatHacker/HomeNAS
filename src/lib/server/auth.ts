@@ -1,6 +1,12 @@
 import { AUDIENCE, ISSUER, PRIVATE_KEY } from '$env/static/private';
+import { COOKIES, ROUTES } from '$lib/types';
 import crypto from 'node:crypto';
 import { V4 } from 'paseto';
+import { getSession } from './queries';
+import { error, redirect, type Cookies } from '@sveltejs/kit';
+import { PUBLIC_ENV } from '$env/static/public';
+import { isRateLimited } from './utils/rateLimit';
+import { errorMap } from './errorMap';
 
 type Payload = {
     uid: number;
@@ -48,5 +54,33 @@ export class Auth {
         } catch (error) {
             return null;
         }
+    }
+
+    /** 
+    * Use only in x.server.ts files
+    */
+    static async verifySession(cookies: Cookies) {
+        const sessionCookie = cookies.get(COOKIES.session);
+        if (!sessionCookie || sessionCookie == "") throw redirect(302, ROUTES.home);
+
+        const dbSession = getSession(sessionCookie);
+        if (!dbSession) throw redirect(302, ROUTES.home);
+    }
+
+    static async checkRatelimit(request: Request, getClientAddress: () => string, strict?: boolean) {
+        const ip = Auth.getClientIp(request, getClientAddress);
+
+        if (PUBLIC_ENV !== 'DEV') {
+            const isLimited = isRateLimited(ip, { strict });
+            if (isLimited) return error(429, errorMap.tooManyRequests);
+        }
+    }
+
+    static getClientIp(request: Request, getClientAddress: () => string) {
+        const xff = request.headers.get('x-forwarded-for');
+        if (xff) {
+            return xff.split(',')[0].trim();
+        }
+        return getClientAddress();
     }
 }

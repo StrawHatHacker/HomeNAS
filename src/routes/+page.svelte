@@ -14,7 +14,7 @@
   const sendCodeWithEmail = async () => {
     messageDisplay = "";
     if (email == "") return;
-    
+
     try {
       const res = await fetch("/api/auth/sendEmail", {
         method: "POST",
@@ -84,8 +84,7 @@
   </div>
 
   {#if pageState === "email"}
-    <div>
-      <form class="flex gap-2 flex-col md:flex-row">
+      <form class="flex gap-2 flex-col md:flex-row items-stretch">
         <input
           id="nas-email"
           class="hacker-input"
@@ -98,7 +97,6 @@
         />
         <FancyButton text="REQUEST CODE" onclick={sendCodeWithEmail} />
       </form>
-    </div>
   {:else if pageState === "code"}
     <div>
       <Checkbox
@@ -107,7 +105,12 @@
       />
       <div></div>
       <form class="flex gap-2 flex-col md:flex-row">
-        <input class="hacker-input" type="password" placeholder="ENTER CODE" bind:value={code} />
+        <input
+          class="hacker-input"
+          type="password"
+          placeholder="ENTER CODE"
+          bind:value={code}
+        />
         <FancyButton text="VERIFY" onclick={verifyCode} />
       </form>
 
@@ -122,7 +125,30 @@
 </main>
 
 <style>
+  @reference "../routes/layout.css";
+
   h1 {
     font-size: clamp(2rem, 6vw, 5rem);
+  }
+
+  .hacker-input {
+    backdrop-filter: blur(2px);
+    color: var(--terminal-green);
+    height: 100%;
+
+    border: 1px solid var(--terminal-dark-green);
+
+    @apply py-4 px-6;
+  }
+
+  .hacker-input::placeholder {
+    color: var(--terminal-dark-green);
+    opacity: 1;
+  }
+
+  .hacker-input:focus {
+    outline: none;
+    border: 1px solid var(--terminal-green);
+    box-shadow: 0 0 8px var(--terminal-green);
   }
 </style>

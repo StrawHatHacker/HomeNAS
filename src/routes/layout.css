@@ -19,11 +19,14 @@
   --terminal-dark-green: hsl(141, 100%, 23%);
   --color-info: #3f82df;
 
+  --darker-grey: hsl(0, 0%, 8%);
   --dark-grey: hsl(0, 0%, 12%);
   --normal-grey: hsl(0, 0%, 20%);
   --light-grey: hsl(0, 0%, 30%);
   --lighter-grey: hsl(0, 0%, 40%);
   --lighter-grey: hsl(0, 0%, 50%);
+
+  --clr-error: hsl(0, 100%, 50%);
 }
 
 body {
@@ -51,28 +54,8 @@ h1 {
   line-height: 100%;
 }
 
-:where(.hacker-input) {
-  backdrop-filter: blur(2px);
-  color: var(--terminal-green);
-
-  border: 1px solid var(--terminal-dark-green);
-
-  @apply py-4 px-6;
-}
-
-.hacker-input::placeholder {
-  color: var(--terminal-dark-green);
-  opacity: 1;
-}
-
-.hacker-input:focus {
-  outline: none;
-  border: 1px solid var(--terminal-green);
-  box-shadow: 0 0 8px var(--terminal-green);
-}
-
 input {
-  border: 1px solid var(--light-grey);
+  border: 1px solid var(--normal-grey);
   @apply px-2 h-10 min-w-30 max-w-80 w-full;
 }
 
@@ -81,7 +64,7 @@ button {
 }
 
 .btn-simple {
-  border: 1px solid var(--light-grey);
+  border: 1px solid var(--normal-grey);
   @apply flex items-center justify-center h-10 px-4;
   transition: all 0.2s ease-in-out;
 

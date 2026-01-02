@@ -2,7 +2,6 @@ import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { isRateLimited } from '$lib/server/utils/rateLimit';
 import { errorMap } from '$lib/server/errorMap';
-import { getClientIp } from '$lib/server/utils/getClientIP';
 import * as Queries from '$lib/server/queries';
 import type { DataOrErr } from '$lib/types';
 import { sendOneTimePassEmail } from '$lib/server/providers/emailer';
@@ -10,16 +9,9 @@ import { Auth } from '$lib/server/auth';
 import { PUBLIC_ENV } from '$env/static/public';
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
-    const ip = getClientIp(request, getClientAddress);
+    Auth.checkRatelimit(request, getClientAddress, true);
+    
     const body = await request.json();
-
-    console.info(`Someone tried to login from ${ip} with email: ${body['email']}`);
-
-    if (PUBLIC_ENV !== 'DEV') {
-        const isLimited = isRateLimited(ip, { strict: true });
-        if (isLimited) return error(429, errorMap.tooManyRequests);
-    }
-
     const validatedBody = validateBody(body);
     if (!validatedBody.ok) return error(400, validatedBody.error);
 
@@ -41,7 +33,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
 const validateBody = (body: any): DataOrErr<{ email: string }, string> => {
     if (!body || typeof body !== 'object') return { ok: false, error: errorMap.goAway };
-    if (!('email' in body)|| typeof body.email !== 'string') return { ok: false, error: errorMap.invalidEmail };
+    if (!('email' in body) || typeof body.email !== 'string') return { ok: false, error: errorMap.invalidEmail };
 
     return { ok: true, data: body };
 }

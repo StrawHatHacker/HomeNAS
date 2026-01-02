@@ -3,9 +3,9 @@ type RateLimitEntry = {
     resetAt: number;
 };
 
-const RATE_LIMIT = 20;        // requests
-const RATE_LIMIT_STRICT = 2;  // requests
-const WINDOW_MS = 60_000;     // per minute
+const RATE_LIMIT = 50;        // requests
+const RATE_LIMIT_STRICT = 3;  // requests
+const WINDOW_MS = 30_000;     // 30 seconds
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
