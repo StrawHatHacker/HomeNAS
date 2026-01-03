@@ -11,7 +11,8 @@
   let deletePreviousSessions = $state(false);
   let messageDisplay = $state("");
 
-  const sendCodeWithEmail = async () => {
+  const sendCodeWithEmail = async (e: SubmitEvent) => {
+    e.preventDefault();
     messageDisplay = "";
     if (email == "") return;
 
@@ -33,7 +34,8 @@
     }
   };
 
-  const verifyCode = async () => {
+  const verifyCode = async (e: SubmitEvent) => {
+    e.preventDefault();
     messageDisplay = "";
     if (code == "") return;
 
@@ -58,7 +60,7 @@
 </script>
 
 <svelte:head>
-  <title>NAS</title>
+  <title>HomeNAS</title>
 </svelte:head>
 
 <Matrix />
@@ -66,10 +68,7 @@
 <main
   class="flex flex-col items-center justify-center gap-10 h-screen w-fit mx-auto text-(--terminal-green)"
 >
-  <h1 class="text-center flex flex-col tracking-tighter">
-    <span>strawhathacker's</span>
-    <span>n.a.s.</span>
-  </h1>
+  <h1 class="text-center flex tracking-tighter">home n.a.s.</h1>
 
   <div id="terminal" class="mx-6">
     <p class="text-sm lg:text-md mt-2 mono">
@@ -84,19 +83,22 @@
   </div>
 
   {#if pageState === "email"}
-      <form class="flex gap-2 flex-col md:flex-row items-stretch">
-        <input
-          id="nas-email"
-          class="hacker-input"
-          name="nas-email"
-          type="email"
-          placeholder="E-MAIL ADDRESS"
-          autocomplete="email"
-          inputmode="email"
-          bind:value={email}
-        />
-        <FancyButton text="REQUEST CODE" onclick={sendCodeWithEmail} />
-      </form>
+    <form
+      class="flex gap-2 flex-col md:flex-row items-stretch"
+      onsubmit={sendCodeWithEmail}
+    >
+      <input
+        id="nas-email"
+        class="hacker-input"
+        name="nas-email"
+        type="email"
+        placeholder="E-MAIL ADDRESS"
+        autocomplete="email"
+        inputmode="email"
+        bind:value={email}
+      />
+      <FancyButton text="REQUEST CODE" />
+    </form>
   {:else if pageState === "code"}
     <div>
       <Checkbox
@@ -104,14 +106,14 @@
         bind:checked={deletePreviousSessions}
       />
       <div></div>
-      <form class="flex gap-2 flex-col md:flex-row">
+      <form class="flex gap-2 flex-col md:flex-row" onsubmit={verifyCode}>
         <input
           class="hacker-input"
           type="password"
           placeholder="ENTER CODE"
           bind:value={code}
         />
-        <FancyButton text="VERIFY" onclick={verifyCode} />
+        <FancyButton text="VERIFY" />
       </form>
 
       <button

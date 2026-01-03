@@ -4,7 +4,7 @@
     onclick,
   }: {
     text: string;
-    onclick: () => void;
+    onclick?: () => void;
   } = $props();
 </script>
 

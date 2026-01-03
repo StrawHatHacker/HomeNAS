@@ -69,7 +69,7 @@ export const initDB = async () => {
 
         // Adding users by hand to avoid developer mistakes
         const users = [{ name: ADMIN_NAME, email: ADMIN_EMAIL },] as const;
-        const { checkIfUserDirExists, createUserDir, upsertUser } = await import('$lib/server/queries');
+        const { checkIfUserDirExists, createUserDirs, upsertUser } = await import('$lib/server/queries');
 
         users.forEach(async (user) => {
             const u = upsertUser(user.name, user.email);
@@ -77,7 +77,7 @@ export const initDB = async () => {
 
             // Database operations
             const adminDirExists = checkIfUserDirExists(user.name);
-            if (!adminDirExists) createUserDir(u.id, user.name);
+            if (!adminDirExists) createUserDirs(u.id, user.name);
 
             // Filesystem operations
             await NAS.createUserFolders(user.name);

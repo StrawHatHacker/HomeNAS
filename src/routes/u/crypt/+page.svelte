@@ -1,21 +1,49 @@
 <script lang="ts">
   import { Uploader } from "$lib/stores/uploader.svelte";
+  import { onMount } from "svelte";
   import WrapperHelper from "../wrapperHelper.svelte";
+  import { USER_FOLDERS_TYPES, type BreadCrumbsEntry } from "$lib/types.js";
+
+  let { data } = $props();
 
   let viewType = $state<"grid" | "list">("grid");
-  let BreadcrumbEntries = $state(["crypt", "test", "test2"]);
+  let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
+
+  let lastBreadcrumbEntry = $derived(
+    BreadcrumbEntries[BreadcrumbEntries.length - 1]
+  );
+
+  onMount(() => {
+    const cryptData = data.user.rootFolder.subFolders.find(
+      (f) => f.name === USER_FOLDERS_TYPES.crypt
+    );
+    if (!cryptData) return;
+
+    BreadcrumbEntries = [
+      {
+        id: cryptData.id,
+        name: cryptData.name,
+      },
+    ];
+  });
 
   const onFilesAdded = async (files: FileList) => {
     console.info("Trying to upload ", files.length, " files");
 
-    Uploader.addFiles(files, { encrypted: false });
-
-    // TODO figure out the breadcrumb and send it to the server and get them from the server
+    const relativePathToCrypt: string[] = BreadcrumbEntries.map(
+      (e) => e.name
+    ).slice(1); // remove '/crypt'
+    
+    Uploader.queueFiles(
+      files,
+      relativePathToCrypt,
+      lastBreadcrumbEntry.id,
+      USER_FOLDERS_TYPES.crypt
+    );
   };
 
   const navigateToDirFromBreadcrumb = (index: number) => {
-    console.log(index);
-
+    if (index < 0) return;
     BreadcrumbEntries = BreadcrumbEntries.slice(0, index + 1);
   };
 </script>
@@ -53,15 +81,15 @@
     </button>
   </div>
   <div id="breadcrumbs" class="flex gap-2 text-(--lighter-grey) text-sm py-4">
-    {#each BreadcrumbEntries as directory, i}
+    {#each BreadcrumbEntries as entry, i}
       <button
         onclick={() => navigateToDirFromBreadcrumb(i)}
         class:hover:underline={i < BreadcrumbEntries.length - 1}
         class:!cursor-default={i >= BreadcrumbEntries.length - 1}
       >
-        {directory}
+        {entry.name}
       </button>
-      <span class:hidden={i === BreadcrumbEntries.length - 1}>/</span>
+      <span class:hidden={i === BreadcrumbEntries.length - 1}>&gt;</span>
     {/each}
   </div>
 {/snippet}

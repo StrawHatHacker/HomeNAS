@@ -4,7 +4,7 @@
 
 {#if Uploader.tasks.length > 0}
   <div
-    class="fixed bottom-4 right-4 w-full z-50 max-w-80 max-h-120 overflow-y-auto flex flex-col gap-4 p-4 bg-(--darker-grey) border border-(--normal-grey)"
+    class="fixed bottom-4 right-4 w-full z-50 max-w-90 max-h-120 overflow-y-auto flex flex-col gap-4 p-4 bg-(--darker-grey) border border-(--normal-grey)"
   >
     <div class="flex justify-between items-center mb-2 text-xs">
       <span class="font-bold uppercase tracking-wider text-(--lighter-grey)">
@@ -46,6 +46,11 @@
             {/if}
           </span>
         </div>
+        {#if task.errorMessage !== undefined || task.errorMessage !== ""}
+          <p class="text-xs text-(--clr-error) break-all">
+            {task.errorMessage}
+          </p>
+        {/if}
       </div>
     {/each}
   </div>

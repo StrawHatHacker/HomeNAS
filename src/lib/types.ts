@@ -20,4 +20,15 @@ export const ROUTES = {
     bin: '/u/bin',
 } as const;
 
-export type User = ReturnType<typeof getSession>['user'];
+export type User = NonNullable<ReturnType<typeof getSession>>['user'];
+
+export const USER_FOLDERS_TYPES = {
+    crypt: 'crypt',
+    encrypted: 'encrypted',
+} as const;
+
+export type UserFolderType = keyof typeof USER_FOLDERS_TYPES;
+
+export type BreadCrumbsEntry = {
+    id: number; name: string
+}

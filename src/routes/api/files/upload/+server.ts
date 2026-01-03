@@ -1,19 +1,38 @@
 import { Auth } from "$lib/server/auth.js";
-import { error, json, redirect } from "@sveltejs/kit";
+import { NAS } from "$lib/server/providers/nas.js";
+import { USER_FOLDERS_TYPES, type UserFolderType } from "$lib/types";
+import { error, json } from "@sveltejs/kit";
+import * as Queries from "$lib/server/queries";
 
 export const POST = async ({ request, getClientAddress, cookies }) => {
     Auth.checkRatelimit(request, getClientAddress);
-    Auth.verifySession(cookies);
+    const session = Auth.verifySession(cookies);
 
     const data = await request.formData();
     const file = data.get('file') as File;
+    const folderType = data.get('folderType') as UserFolderType;
+    const relativePath = data.get('relativePath') as string;
+    let targetDirIdData = data.get('targetDirId');
 
     if (!file) return new Response('No file', { status: 400 });
+    if (!Object.keys(USER_FOLDERS_TYPES).includes(folderType))
+        return new Response('Invalid folder type', { status: 400 });
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const targetDirId = Number(targetDirIdData);
+    if (Number.isNaN(Number(targetDirId))) return new Response('Invalid targetDirId', { status: 400 });
 
-    // mkdirSync('./uploads', { recursive: true });
-    // writeFileSync(`./uploads/${file.name}`, buffer);
+    try {
+        // TODO transaction
+        const dirExists = Queries.checkIfDirExists(targetDirId, session.user.id);
+        if (!dirExists) throw new Error('Directory does not exist.');
+
+        Queries.createFile(targetDirId, session.user.id, file.name);
+
+        await NAS.saveFileToDir(session.user.name, file.name, Buffer.from(await file.arrayBuffer()), relativePath, folderType);
+    } catch (e) {
+        if (e instanceof Error) return error(400, e.message);
+        return error(500, "Failed to upload file.");
+    }
 
     return json({});
 };

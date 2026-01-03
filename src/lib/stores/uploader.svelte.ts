@@ -1,14 +1,15 @@
+import type { UserFolderType } from "$lib/types";
+
 export type UploadTask = {
     id: string;
     file: File;
     progress: number;
-    encrypted: boolean;
+    folderType: UserFolderType;
     status: 'waiting' | 'uploading' | 'done' | 'error';
+    errorMessage?: string;
+    relativePath: string[];
+    targetDirId: number;
     xhr?: XMLHttpRequest;
-}
-
-export type AddFilesOptions = {
-    encrypted: boolean;
 }
 
 class UploaderQueueStore {
@@ -22,12 +23,14 @@ class UploaderQueueStore {
     queue = $derived(this.tasks.filter(t => t.status === 'waiting'));
 
     // Add new files to queue
-    addFiles(fileList: FileList, { encrypted }: AddFilesOptions) {
+    queueFiles(fileList: FileList, relativePath: string[], targetDirId: number, folderType: UserFolderType) {
         const newTasks: UploadTask[] = Array.from(fileList).map(file => ({
             id: crypto.randomUUID(),
             file,
             progress: 0,
-            encrypted,
+            folderType,
+            relativePath,
+            targetDirId,
             status: 'waiting'
         }));
 
@@ -78,6 +81,8 @@ class UploaderQueueStore {
                 task.progress = 100;
             } else {
                 task.status = 'error';
+                const response = JSON.parse(xhr.responseText);
+                task.errorMessage = response['message'] || 'Failed to upload file.';
             }
             this.processQueue();
         };
@@ -92,6 +97,9 @@ class UploaderQueueStore {
         // Send as FormData
         const formData = new FormData();
         formData.append('file', task.file);
+        formData.append('folderType', task.folderType);
+        formData.append('relativePath', task.relativePath.join('/'));
+        formData.append('targetDirId', task.targetDirId.toString());
 
         xhr.open('POST', '/api/files/upload');
         xhr.send(formData);

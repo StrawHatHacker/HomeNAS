@@ -59,12 +59,14 @@ export class Auth {
     /** 
     * Use only in x.server.ts files
     */
-    static async verifySession(cookies: Cookies) {
+    static verifySession(cookies: Cookies) {
         const sessionCookie = cookies.get(COOKIES.session);
         if (!sessionCookie || sessionCookie == "") throw redirect(302, ROUTES.home);
 
         const dbSession = getSession(sessionCookie);
         if (!dbSession) throw redirect(302, ROUTES.home);
+
+        return dbSession;
     }
 
     static async checkRatelimit(request: Request, getClientAddress: () => string, strict?: boolean) {
