@@ -96,15 +96,28 @@ export const getDirById = (id: number, user_id: number) => {
 export const getDirContents = (parent_id: number, user_id: number) => {
     const rows = getDirContentsQuery.all({ parent_id, user_id }) as any[];
 
-    return rows.map((row) => ({
-        id: row.id as number,
-        name: row.name as string,
-        isDir: row.is_dir === 1,
-        parentId: row.parent_id as number,
-        userId: row.user_id as number,
-        createdAt: row.created_at as string,
-        modifiedAt: row.modified_at as string
-    }));
+    return rows.map((row) => {
+        let baseName = '';
+        let ext = '';
+
+        if (row.is_dir === 0 && row.name.lastIndexOf('.') > 0) {
+            const lastDot = row.name.lastIndexOf('.');
+            baseName = row.name.substring(0, lastDot);
+            ext = row.name.substring(lastDot);
+        }
+
+        return {
+            id: row.id as number,
+            name: row.name as string,
+            isDir: row.is_dir === 1,
+            parentId: row.parent_id as number,
+            userId: row.user_id as number,
+            createdAt: row.created_at as string,
+            modifiedAt: row.modified_at as string,
+            baseName,
+            ext
+        }
+    });
 }
 
 export const createDir = (user_id: number, name: string, parent_id: number) => {

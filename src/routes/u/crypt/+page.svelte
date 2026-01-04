@@ -165,9 +165,13 @@
       />
     </button>
   </div>
-  <div id="breadcrumbs" class="flex flex-wrap gap-2 text-(--lighter-grey) text-sm py-4">
+  <div
+    id="breadcrumbs"
+    class="flex flex-wrap gap-2 text-(--lighter-grey) text-sm py-4"
+  >
     {#each BreadcrumbEntries as entry, i}
-      <button class="bg-(--dark-grey) px-1"
+      <button
+        class="bg-(--dark-grey) px-1"
         onclick={() => navigateToDirFromBreadcrumb(i)}
         class:hover:underline={i < BreadcrumbEntries.length - 1}
         class:!cursor-default={i >= BreadcrumbEntries.length - 1}
@@ -175,7 +179,10 @@
       >
         {entry.name}
       </button>
-      <span class:hidden={i === BreadcrumbEntries.length - 1} class="cursor-default">&gt;</span>
+      <span
+        class:hidden={i === BreadcrumbEntries.length - 1}
+        class="cursor-default">&gt;</span
+      >
     {/each}
   </div>
   <div id="dir-contents-container">
@@ -206,20 +213,26 @@
 <!-- TODO show the correct icon based on mime/type -->
 {#snippet dirDataCard(entry: DirContents[0])}
   <div
-    class="flex flex-col w-60 aspect-square border border-(--normal-grey) overflow-hidden"
+    class="flex flex-col w-42 aspect-square border border-(--normal-grey) overflow-hidden"
   >
-    <div class="h-1/2 w-full flex items-center justify-center">
+    <div class="h-full w-full flex items-center justify-center">
       {#if entry.isDir}
         <img
           src="/icons/folder.svg"
           alt="Folder"
-          class="h-full w-full object-contain"
+          class="h-1/2 w-1/2 object-contain"
         />
+      {:else}
+        <p class="text-4xl text-(--lighter-grey) text-center tracking-wider">
+          {entry.ext}
+        </p>
       {/if}
     </div>
 
-    <div class="h-1/2 w-full px-2">
-      <p class=" line-clamp-2">{entry.name}</p>
+    <div class="text-sm h-[6em] w-full px-2">
+      <p class="line-clamp-3 break-all tracking-tight">
+        {entry.isDir ? entry.name : entry.baseName}
+      </p>
     </div>
   </div>
 {/snippet}
