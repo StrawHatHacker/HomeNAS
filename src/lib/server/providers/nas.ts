@@ -11,6 +11,21 @@ export class NAS {
         // await fs.mkdir(`${watchPath}/${folderName}/music`, { recursive: true });
     }
 
+    static async createDir(userFolder: string, folderType: UserFolderType, relativePath: string, name: string) {
+        const targetDir = path.join(watchPath, userFolder, folderType, relativePath);
+
+        try {
+            await fs.access(targetDir);
+        } catch {
+            throw new Error(`Directory does not exist: ${userFolder}/${folderType}/${relativePath}`);
+        }
+
+        const finalPath = path.join(targetDir, name);
+        await fs.mkdir(finalPath);
+
+        return finalPath;
+    }
+
     static async saveFileToDir(userFolder: string, fileName: string, buffer: Buffer, relativePath: string, folderType: UserFolderType) {
         const targetDir = path.join(watchPath, userFolder, folderType, relativePath);
 
@@ -21,7 +36,6 @@ export class NAS {
         }
 
         const finalPath = path.join(targetDir, fileName);
-
         await fs.writeFile(finalPath, buffer);
 
         return finalPath;

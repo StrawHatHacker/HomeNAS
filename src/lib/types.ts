@@ -1,5 +1,5 @@
 // Only import types from server, else you will get a nasty error
-import type { getSession } from "./server/queries";
+import type { getDirContents, getSession } from "./server/queries";
 
 export type Only<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
 export type Either<T, U> = Only<U, T> | Only<T, U>;
@@ -32,3 +32,5 @@ export type UserFolderType = keyof typeof USER_FOLDERS_TYPES;
 export type BreadCrumbsEntry = {
     id: number; name: string
 }
+
+export type DirContents = ReturnType<typeof getDirContents>;

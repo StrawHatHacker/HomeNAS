@@ -14,9 +14,9 @@ export const POST = async ({ request, getClientAddress, cookies }) => {
     const relativePath = data.get('relativePath') as string;
     let targetDirIdData = data.get('targetDirId');
 
-    if (!file) return new Response('No file', { status: 400 });
+    if (!file) return error(400, 'No file');
     if (!Object.keys(USER_FOLDERS_TYPES).includes(folderType))
-        return new Response('Invalid folder type', { status: 400 });
+        return error(400, 'Invalid folder type');
 
     const targetDirId = Number(targetDirIdData);
     if (Number.isNaN(Number(targetDirId))) return new Response('Invalid targetDirId', { status: 400 });
@@ -28,7 +28,7 @@ export const POST = async ({ request, getClientAddress, cookies }) => {
 
         Queries.createFile(targetDirId, session.user.id, file.name);
 
-        await NAS.saveFileToDir(session.user.name, file.name, Buffer.from(await file.arrayBuffer()), relativePath, folderType);
+        await NAS.saveFileToDir(session.user.rootFolder.name, file.name, Buffer.from(await file.arrayBuffer()), relativePath, folderType);
     } catch (e) {
         if (e instanceof Error) return error(400, e.message);
         return error(500, "Failed to upload file.");

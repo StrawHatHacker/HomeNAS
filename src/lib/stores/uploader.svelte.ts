@@ -7,7 +7,15 @@ export type UploadTask = {
     folderType: UserFolderType;
     status: 'waiting' | 'uploading' | 'done' | 'error';
     errorMessage?: string;
+    /**
+     *  Relative path to the target directory.
+     *  Helps with saving files to the correct directory using fs
+    */
     relativePath: string[];
+    /**
+     *  The id of the target directory
+     *  Helps with creating entries in the database
+     */
     targetDirId: number;
     xhr?: XMLHttpRequest;
 }

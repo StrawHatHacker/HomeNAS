@@ -63,6 +63,10 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
 .btn-simple {
   border: 1px solid var(--normal-grey);
   @apply flex items-center justify-center h-10 px-4;
@@ -105,4 +109,8 @@ button {
   border: 1px solid var(--terminal-dark-green);
   @apply py-4 px-6 w-full;
   backdrop-filter: blur(2px);
+}
+
+.debug {
+  outline: 1px solid red !important;
 }

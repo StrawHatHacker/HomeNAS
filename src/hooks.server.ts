@@ -43,7 +43,7 @@ export const initDB = async () => {
                 parent_id INTEGER,
                 user_id INTEGER NOT NULL,
 
-                name TEXT NOT NULL,
+                name TEXT NOT NULL COLLATE NOCASE,
                 is_dir INTEGER NOT NULL CHECK (is_dir IN (0,1)),
 
                 size INTEGER,                -- NULL for directories
@@ -57,6 +57,9 @@ export const initDB = async () => {
 
                 UNIQUE (parent_id, name)
             )`).run();
+
+        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS ui_fs_entries_path ON fs_entries (parent_id, name) WHERE parent_id IS NOT NULL;`).run();
+        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS ui_fs_entries_root_path ON fs_entries (name) WHERE parent_id IS NULL;`).run();
 
         // TODO we will see about these indexes
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_parent ON fs_entries(parent_id);`).run();

@@ -16,9 +16,19 @@ const checkIfDirExistsQuery = db.prepare(
         AND parent_id IS NOT NULL
     LIMIT 1`);
 
+const getDirQuery = db.prepare(`SELECT id, name FROM fs_entries WHERE parent_id = $parent_id AND is_dir = 1 AND user_id = $user_id AND name = $name LIMIT 1`);
+
+const getDirByIdQuery = db.prepare(`SELECT id, name FROM fs_entries WHERE id = $id AND user_id = $user_id AND is_dir = 1 AND user_id = $user_id LIMIT 1`);
+
+const getDirContentsQuery = db.prepare(
+    `SELECT id, name, is_dir, user_id, parent_id, created_at, modified_at
+    FROM fs_entries 
+    WHERE parent_id = $parent_id  AND user_id = $user_id 
+    ORDER BY is_dir DESC, name ASC`);
+
 const createDirQuery = db.prepare(
-    `INSERT INTO fs_entries (user_id, name, is_dir, created_at, modified_at)
-    VALUES ( $user_id, $name, 1,  datetime('now'), datetime('now')) RETURNING id`);
+    `INSERT INTO fs_entries (parent_id, user_id, name, is_dir, created_at, modified_at)
+    VALUES ($parent_id, $user_id, $name, 1, datetime('now'), datetime('now')) RETURNING id`);
 
 const createUserSubFolderQuery = db.prepare(
     `INSERT INTO fs_entries (parent_id, user_id, name, is_dir, created_at, modified_at)
@@ -75,12 +85,34 @@ export const checkIfDirExists = (id: number, user_id: number) => {
     return checkIfDirExistsQuery.get({ id, user_id }) as { id: number };
 }
 
-export const createDir = (user_id: number, name: string) => {
-    return createDirQuery.get({ user_id, name }) as { id: number };
+export const getDir = (name: string, user_id: number, parent_id: number) => {
+    return getDirQuery.get({ name, user_id, parent_id }) as { id: number; name: string }[];
+}
+
+export const getDirById = (id: number, user_id: number) => {
+    return getDirByIdQuery.get({ id, user_id }) as { id: number; name: string };
+}
+
+export const getDirContents = (parent_id: number, user_id: number) => {
+    const rows = getDirContentsQuery.all({ parent_id, user_id }) as any[];
+
+    return rows.map((row) => ({
+        id: row.id as number,
+        name: row.name as string,
+        isDir: row.is_dir === 1,
+        parentId: row.parent_id as number,
+        userId: row.user_id as number,
+        createdAt: row.created_at as string,
+        modifiedAt: row.modified_at as string
+    }));
+}
+
+export const createDir = (user_id: number, name: string, parent_id: number) => {
+    return createDirQuery.get({ user_id, name, parent_id }) as { id: number };
 }
 
 export const createUserDirs = (user_id: number, name: string) => {
-    const parent = createDirQuery.get({ user_id, name }) as { id: number };
+    const parent = createDirQuery.get({ user_id, name, parent_id: null }) as { id: number };
 
     Object.keys(USER_FOLDERS_TYPES).forEach((type) => createUserSubFolderQuery.run({ parent_id: parent.id, user_id, name: type }));
     return;

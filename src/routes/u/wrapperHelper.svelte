@@ -20,10 +20,12 @@
   const openFileExplorer = () => fileInput?.click();
   const toggleMobile = () => isMobileOpen.update((value) => !value);
 
+  // On file input (drag & drop AND classic input)
   const handleFiles = (files: FileList | null) => {
     if (files && files.length > 0) onFilesAdded(files);
   };
 
+  // On classic input file change
   const onInputChange = (e: Event) => {
     handleFiles((e.target as HTMLInputElement).files);
   };
