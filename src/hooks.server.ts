@@ -66,6 +66,9 @@ export const initDB = async () => {
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_user ON fs_entries(user_id);`).run();
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_user_parent ON fs_entries(user_id, parent_id);`).run();
 
+        // Crucial for ON CONFLICT
+        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_file_path_identity ON fs_entries (parent_id, user_id, name);`).run();
+
         // Check if env vars are set (Admin has special priviledges)
         if (!ADMIN_EMAIL) throw new Error('env var ADMIN_EMAIL is not set');
         if (!ADMIN_NAME) throw new Error('env var ADMIN_NAME is not set');

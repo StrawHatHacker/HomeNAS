@@ -1,4 +1,5 @@
 import type { UserFolderType } from "$lib/types";
+import { FileUtil } from "$lib/utils/fileUtil";
 
 export type UploadTask = {
     id: string;
@@ -17,10 +18,14 @@ export type UploadTask = {
      *  Helps with creating entries in the database
      */
     targetDirId: number;
+    mimeType: string;
+    checksum: string;
     xhr?: XMLHttpRequest;
 }
 
 class UploaderQueueStore {
+    onUploadSuccess?: (task: UploadTask) => void;
+
     // Task queue
     tasks = $state<UploadTask[]>([]);
 
@@ -31,16 +36,26 @@ class UploaderQueueStore {
     queue = $derived(this.tasks.filter(t => t.status === 'waiting'));
 
     // Add new files to queue
-    queueFiles(fileList: FileList, relativePath: string[], targetDirId: number, folderType: UserFolderType) {
-        const newTasks: UploadTask[] = Array.from(fileList).map(file => ({
-            id: crypto.randomUUID(),
-            file,
-            progress: 0,
-            folderType,
-            relativePath,
-            targetDirId,
-            status: 'waiting'
-        }));
+    async queueFiles(fileList: FileList, relativePath: string[], targetDirId: number, folderType: UserFolderType) {
+        const taskPromises = Array.from(fileList).map(async (file) => {
+            // Calculate the checksum here
+            const checksumValue = await FileUtil.getChecksum(file);
+
+            const t: UploadTask = {
+                id: crypto.randomUUID(),
+                file,
+                progress: 0,
+                folderType,
+                status: 'waiting',
+                relativePath,
+                targetDirId,
+                mimeType: file.type,
+                checksum: checksumValue, // This is now a string
+            };
+            return t;
+        });
+
+        const newTasks = await Promise.all(taskPromises);
 
         this.tasks.push(...newTasks);
 
@@ -87,6 +102,7 @@ class UploaderQueueStore {
             if (xhr.status >= 200 && xhr.status < 300) {
                 task.status = 'done';
                 task.progress = 100;
+                this.onUploadSuccess?.(task);
             } else {
                 task.status = 'error';
                 const response = JSON.parse(xhr.responseText);
@@ -96,7 +112,9 @@ class UploaderQueueStore {
         };
 
         // Error handling
-        xhr.onerror = () => {
+        xhr.onerror = (e) => {
+            console.log(e);
+
             console.error('Error uploading file', task.file.name);
             task.status = 'error';
             this.processQueue();
@@ -108,6 +126,8 @@ class UploaderQueueStore {
         formData.append('folderType', task.folderType);
         formData.append('relativePath', task.relativePath.join('/'));
         formData.append('targetDirId', task.targetDirId.toString());
+        formData.append('mimeType', task.mimeType);
+        formData.append('checksum', task.checksum);
 
         xhr.open('POST', '/api/files/upload');
         xhr.send(formData);

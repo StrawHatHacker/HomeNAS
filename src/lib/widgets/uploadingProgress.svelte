@@ -19,7 +19,7 @@
     </div>
 
     {#each Uploader.tasks as task (task.id)}
-      <div class="flex flex-col w-full">
+      <div class="flex flex-col w-full" id={task.id}>
         <div class="text-sm break-all">
           {task.file.name}
         </div>

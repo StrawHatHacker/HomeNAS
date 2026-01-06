@@ -26,7 +26,7 @@ export class NAS {
         return finalPath;
     }
 
-    static async saveFileToDir(userFolder: string, fileName: string, buffer: Buffer, relativePath: string, folderType: UserFolderType) {
+    static async saveFileToDir(userFolder: string, file: File, buffer: Buffer, relativePath: string, folderType: UserFolderType) {
         const targetDir = path.join(watchPath, userFolder, folderType, relativePath);
 
         try {
@@ -35,7 +35,7 @@ export class NAS {
             throw new Error(`Directory does not exist: ${userFolder}/${folderType}/${relativePath}`);
         }
 
-        const finalPath = path.join(targetDir, fileName);
+        const finalPath = path.join(targetDir, file.name);
         await fs.writeFile(finalPath, buffer);
 
         return finalPath;

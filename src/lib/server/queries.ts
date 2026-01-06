@@ -20,11 +20,16 @@ const getDirQuery = db.prepare(`SELECT id, name FROM fs_entries WHERE parent_id 
 
 const getDirByIdQuery = db.prepare(`SELECT id, name FROM fs_entries WHERE id = $id AND user_id = $user_id AND is_dir = 1 AND user_id = $user_id LIMIT 1`);
 
-const getDirContentsQuery = db.prepare(
-    `SELECT id, name, is_dir, user_id, parent_id, created_at, modified_at
+const getDirFSEntriesQuery = db.prepare(
+    `SELECT id, name, is_dir, size, mime_type, checksum, user_id, parent_id, created_at, modified_at
     FROM fs_entries 
     WHERE parent_id = $parent_id  AND user_id = $user_id 
     ORDER BY is_dir DESC, name ASC`);
+
+const getFileByChecksumQuery = db.prepare(
+    `SELECT id, name, is_dir, size, mime_type, checksum, user_id, parent_id, created_at, modified_at
+    FROM fs_entries 
+    WHERE checksum = $checksum AND user_id = $user_id AND is_dir = 0 LIMIT 1`);
 
 const createDirQuery = db.prepare(
     `INSERT INTO fs_entries (parent_id, user_id, name, is_dir, created_at, modified_at)
@@ -34,9 +39,20 @@ const createUserSubFolderQuery = db.prepare(
     `INSERT INTO fs_entries (parent_id, user_id, name, is_dir, created_at, modified_at)
     VALUES ( $parent_id, $user_id, $name, 1, datetime('now'), datetime('now')) RETURNING id`);
 
-const createFileQuery = db.prepare(
-    `INSERT INTO fs_entries (parent_id, user_id, name, is_dir, created_at, modified_at)
-    VALUES ( $parent_id, $user_id, $name, 0, datetime('now'), datetime('now'))`);
+const upsertFileQuery = db.prepare(
+    `INSERT INTO fs_entries (
+        parent_id, user_id, name, is_dir, checksum, mime_type, size, created_at, modified_at
+    )
+    VALUES (
+        $parent_id, $user_id, $name, 0, $checksum, $mime_type, $size, datetime('now'), datetime('now')
+    )
+    ON CONFLICT(parent_id, name, user_id) DO UPDATE SET
+        checksum = excluded.checksum,
+        mime_type = excluded.mime_type,
+        size = excluded.size,
+        modified_at = datetime('now')
+    WHERE fs_entries.checksum IS NOT excluded.checksum
+`);
 
 const getUserByEmailQuery = db.prepare(`SELECT id, name, email, created_at FROM users WHERE email = $email LIMIT 1`);
 
@@ -93,31 +109,15 @@ export const getDirById = (id: number, user_id: number) => {
     return getDirByIdQuery.get({ id, user_id }) as { id: number; name: string };
 }
 
-export const getDirContents = (parent_id: number, user_id: number) => {
-    const rows = getDirContentsQuery.all({ parent_id, user_id }) as any[];
+export const getFSEntries = (parent_id: number, user_id: number) => {
+    const rows = getDirFSEntriesQuery.all({ parent_id, user_id }) as any[];
 
-    return rows.map((row) => {
-        let baseName = '';
-        let ext = '';
+    return fromRowsToFSEntry(rows);
+}
 
-        if (row.is_dir === 0 && row.name.lastIndexOf('.') > 0) {
-            const lastDot = row.name.lastIndexOf('.');
-            baseName = row.name.substring(0, lastDot);
-            ext = row.name.substring(lastDot);
-        }
-
-        return {
-            id: row.id as number,
-            name: row.name as string,
-            isDir: row.is_dir === 1,
-            parentId: row.parent_id as number,
-            userId: row.user_id as number,
-            createdAt: row.created_at as string,
-            modifiedAt: row.modified_at as string,
-            baseName,
-            ext
-        }
-    });
+export const getFSEntryByChecksum = (checksum: string, user_id: number) => {
+    const row = getFileByChecksumQuery.get({ checksum, user_id }) as { id: number; name: string };
+    return fromRowsToFSEntry([row]);
 }
 
 export const createDir = (user_id: number, name: string, parent_id: number) => {
@@ -131,8 +131,8 @@ export const createUserDirs = (user_id: number, name: string) => {
     return;
 }
 
-export const createFile = (parent_id: number, user_id: number, name: string) => {
-    return createFileQuery.run({ parent_id, user_id, name });
+export const upsertFile = (parent_id: number, user_id: number, file: File, checksum: string, mime_type: string) => {
+    return upsertFileQuery.run({ parent_id, user_id, name: file.name, size: file.size, checksum, mime_type });
 }
 
 export const recursivelyCreateUserDirs = (user_id: number, parent_id: number, dirs: string[]) => {
@@ -220,3 +220,33 @@ export const deleteAllSessionsByUserId = (id: number) => {
 export const addFile = (parent_id: number, user_id: number, name: string) => {
     return addFileQuery.run({ parent_id, user_id, name });
 }
+
+const fromRowsToFSEntry = (rows: any[]) => {
+    if (rows.length === 0) return [];
+
+    return rows.map((row) => {
+        let baseName = '';
+        let ext = '';
+
+        if (row.is_dir === 0 && row.name.lastIndexOf('.') > 0) {
+            const lastDot = row.name.lastIndexOf('.');
+            baseName = row.name.substring(0, lastDot);
+            ext = row.name.substring(lastDot);
+        }
+
+        return {
+            id: row.id as number,
+            name: row.name as string,
+            size: row.size as number | null,
+            mimeType: row.mime_type as string | null,
+            checksum: row.checksum as string | null,
+            isDir: row.is_dir === 1,
+            parentId: row.parent_id as number,
+            userId: row.user_id as number,
+            createdAt: row.created_at as string,
+            modifiedAt: row.modified_at as string,
+            baseName,
+            ext
+        }
+    });
+};

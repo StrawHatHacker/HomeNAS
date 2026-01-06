@@ -71,7 +71,7 @@
   <h1 class="text-center flex tracking-tighter">home n.a.s.</h1>
 
   <div id="terminal" class="mx-6">
-    <p class="text-sm lg:text-md mt-2 mono">
+    <p class="text-sm lg:text-md mono">
       {#if messageDisplay != ""}
         <Typewriter text={messageDisplay} />
       {:else}
@@ -100,13 +100,20 @@
       <FancyButton text="REQUEST CODE" />
     </form>
   {:else if pageState === "code"}
-    <div>
-      <Checkbox
-        label="DELETE_PREVIOUS_SESSIONS"
-        bind:checked={deletePreviousSessions}
-      />
-      <div></div>
-      <form class="flex gap-2 flex-col md:flex-row" onsubmit={verifyCode}>
+    <div class="flex flex-col">
+      <div class="flex justify-between items-end">
+        <Checkbox
+          label="DELETE_PREVIOUS_SESSIONS"
+          bind:checked={deletePreviousSessions}
+        />
+        <span class="text-xs uppercase opacity-50">
+          {deletePreviousSessions.toString()}
+        </span>
+      </div>
+      <form
+        class="flex gap-2 flex-col md:flex-row items-stretch"
+        onsubmit={verifyCode}
+      >
         <input
           class="hacker-input"
           type="password"

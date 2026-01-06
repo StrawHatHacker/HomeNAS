@@ -19,7 +19,7 @@
   --terminal-dark-green: hsl(141, 100%, 23%);
   --color-info: #3f82df;
 
-  --darker-grey: hsl(0, 0%, 8%);
+  --darker-grey: hsl(0, 0%, 6%);
   --dark-grey: hsl(0, 0%, 12%);
   --normal-grey: hsl(0, 0%, 20%);
   --light-grey: hsl(0, 0%, 30%);
@@ -54,9 +54,16 @@ h1 {
   line-height: 100%;
 }
 
-input {
+input[type="text"],
+input[type="password"],
+input[type="email"] {
   border: 1px solid var(--normal-grey);
-  @apply px-2 h-10 min-w-30 max-w-80 w-full;
+  @apply px-2 h-10 min-w-30 w-full;
+}
+
+input[type="checkbox"] {
+  @apply h-4 w-4 cursor-pointer;
+  accent-color: var(--terminal-green);
 }
 
 button {
@@ -65,6 +72,10 @@ button {
 
 button:disabled {
   cursor: not-allowed;
+}
+
+.text-xxs {
+  font-size: 0.625rem;
 }
 
 .btn-simple {

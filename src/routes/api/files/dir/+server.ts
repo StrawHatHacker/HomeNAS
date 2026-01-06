@@ -58,7 +58,7 @@ export const GET = async ({ request, getClientAddress, cookies, url }) => {
 
     const currentDirId = Number(QcurrentDirId);
 
-    const dirContents = Queries.getDirContents(currentDirId, session.user.id);
-    
+    const dirContents = Queries.getFSEntries(currentDirId, session.user.id);
+
     return json(dirContents);
 }
