@@ -25,8 +25,9 @@
     ],
   };
 
-  const toggleSidebarCollape = () => isSidebarCollapsed.update(value => !value);
-  const toggleMobile = () => isMobileOpen.update(value => !value);
+  const toggleSidebarCollape = () =>
+    isSidebarCollapsed.update((value) => !value);
+  const toggleMobile = () => isMobileOpen.update((value) => !value);
   const isActive = (href: string) =>
     page.url.pathname === href || page.url.pathname.startsWith(href + "/");
 </script>
@@ -51,8 +52,7 @@
     >
       {#if !$isSidebarCollapsed || $isMobileOpen}
         <div class="flex items-center gap-2 min-w-max">
-          <img src="/icons/nas.svg" alt="" class="h-6 w-6" />
-          <h2 class="font-bold truncate text-2xl">HomeNAS</h2>
+          <img src="/logo.svg" alt="" class="h-12 w-12" />
         </div>
       {/if}
 

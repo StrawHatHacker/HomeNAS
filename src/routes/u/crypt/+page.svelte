@@ -260,7 +260,7 @@
     {#if isPageLoading}
       <div class="text-md text-(--lighter-grey) text-center">Loading...</div>
     {:else if fsEntries}
-      <div id="files" class="flex flex-wrap gap-2">
+      <div id="files" class="fsentries-grid">
         {#each fsEntries as ddEntry}
           {@render dirDataCard(ddEntry)}
         {/each}
@@ -290,7 +290,7 @@
 
 {#snippet dirDataCard(entry: FSEntries[0])}
   <button
-    class="group relative flex flex-col w-44 border border-(--normal-grey) overflow-clip hover:border-(--light-grey) duration-200 transition-all"
+    class="group relative flex flex-col w-full border border-(--normal-grey) overflow-clip hover:border-(--light-grey) duration-200 transition-all"
     class:border-(--terminal-green)={selectedFiles.has(entry.id)}
     class:hover:border-(--terminal-green)={selectedFiles.has(entry.id)}
   >
@@ -346,3 +346,11 @@
 {/snippet}
 
 <WrapperHelper {title} {search} {content} {onFilesAdded} />
+
+<style>
+  .fsentries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: 1rem;
+  }
+</style>
