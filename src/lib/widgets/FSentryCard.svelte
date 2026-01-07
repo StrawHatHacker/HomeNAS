@@ -56,9 +56,15 @@
   <div
     role="button"
     tabindex="0"
-    class="group relative flex flex-col w-full h-full border border-(--normal-grey) hover:border-(--light-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) duration-500 transition-all preserve-3d cursor-pointer"
-    class:border-(--terminal-green)={selectedFiles.has(entry.id)}
-    class:hover:border-(--terminal-green)={selectedFiles.has(entry.id)}
+    class="group relative flex flex-col w-full h-full border transition-all duration-500 preserve-3d cursor-pointer focus:outline-none"
+    class:border-(--normal-grey)={!selectedFiles.has(entry.id)}
+    class:hover:border-(--light-grey)={!selectedFiles.has(entry.id)}
+    class:border-white={selectedFiles.has(entry.id)}
+    class:ring-2={selectedFiles.has(entry.id)}
+    class:ring-white={selectedFiles.has(entry.id)}
+    class:focus:ring-2={true}
+    class:focus:ring-(--terminal-green)={true}
+    class:focus:border-(--terminal-green)={true}
     class:rotate-y-180={isFlipped}
     oncontextmenu={handleRightClick}
     onkeydown={handleKeyDown}

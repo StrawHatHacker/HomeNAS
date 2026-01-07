@@ -67,7 +67,7 @@ input[type="email"] {
 
 input[type="checkbox"] {
   @apply h-4 w-4 cursor-pointer;
-  accent-color: var(--terminal-green);
+  accent-color: white;
 }
 
 button {
