@@ -10,15 +10,14 @@
   import { modal } from "$lib/stores/modal.svelte.js";
   import Button from "$lib/widgets/button.svelte";
   import { SvelteSet } from "svelte/reactivity";
-  import FsentryCard from "../../../lib/widgets/FSentryCard.svelte";
-  import FSentryCard from "../../../lib/widgets/FSentryCard.svelte";
+  import FSentryCard from "../../../lib/widgets/FSEntryCard.svelte";
 
   let { data } = $props();
 
   let createDirValue = $state("");
   let createDirError = $state("");
   let viewType = $state<"grid" | "list">("grid");
-  let isPageLoading = $state(false);
+  let pageState = $state<"initLoading" | "loading" | "loaded">("initLoading");
   let selectedFiles = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
@@ -44,7 +43,7 @@
       },
     ];
 
-    await getCurrentDirData();
+    await getCurrentDirData(true);
   });
 
   const onFilesAdded = async (files: FileList) => {
@@ -56,9 +55,9 @@
     );
   };
 
-  const getCurrentDirData = async () => {
+  const getCurrentDirData = async (initLoading = false) => {
     try {
-      isPageLoading = true;
+      pageState = initLoading ? "initLoading" : "loading";
 
       const res = await fetch(
         `/api/files/dir?currentDirId=${lastBreadcrumbEntry.id}`,
@@ -74,14 +73,14 @@
     } catch (e) {
       console.error(e);
     } finally {
-      isPageLoading = false;
+      pageState = "loaded";
     }
   };
 
   const createFolder = async () => {
     try {
-      if (isPageLoading || createDirValue === "") return;
-      isPageLoading = true;
+      if (pageState !== "loaded" || createDirValue === "") return;
+      pageState = "loading";
       modal.isLoading = true;
 
       const res = await fetch("/api/files/dir", {
@@ -105,13 +104,13 @@
       if (e instanceof Error) createDirError = e.message;
       else createDirError = "Failed to create directory.";
     } finally {
-      isPageLoading = false;
+      pageState = "loaded";
       modal.isLoading = false;
     }
   };
 
   const navigateToDirFromBreadcrumb = (index: number) => {
-    if (index < 0) return;
+    if (index < 0 || index === BreadcrumbEntries.length - 1) return;
     BreadcrumbEntries = BreadcrumbEntries.slice(0, index + 1);
   };
 
@@ -192,14 +191,14 @@
       <button
         class="btn-simple shrink-0"
         onclick={selectAll}
-        disabled={isPageLoading}
+        disabled={pageState === "initLoading" || pageState === "loading"}
       >
         Select All
       </button>
       <button
         class="btn-simple shrink-0"
         onclick={deselectAll}
-        disabled={isPageLoading}
+        disabled={pageState === "initLoading" || pageState === "loading"}
       >
         Deselect All
       </button>
@@ -207,18 +206,18 @@
       <button
         class="btn-simple btn-square shrink-0"
         onclick={openFileExplorer}
-        disabled={isPageLoading}
+        disabled={pageState === "initLoading" || pageState === "loading"}
       >
         <img src="/icons/upload.svg" alt="" class="h-6 w-6" />
       </button>
       <button
         class="btn-simple btn-square shrink-0"
-        disabled={isPageLoading}
+        disabled={pageState === "initLoading" || pageState === "loading"}
         onclick={() =>
           modal.openSnippet(createFolderModal, {}, () => {
             createDirValue = "";
             createDirError = "";
-            isPageLoading = false;
+            pageState = "loaded";
           })}
       >
         <img src="/icons/addFolder.svg" alt="" class="h-6 w-6" />
@@ -227,7 +226,7 @@
       <button
         class="btn-simple btn-square shrink-0"
         onclick={() => (viewType = viewType === "grid" ? "list" : "grid")}
-        disabled={isPageLoading}
+        disabled={pageState === "initLoading" || pageState === "loading"}
       >
         <img
           src={viewType === "grid" ? "/icons/grid.svg" : "/icons/list.svg"}
@@ -243,28 +242,35 @@
     class="flex flex-wrap gap-2 text-(--lighter-grey) text-sm py-4"
   >
     {#each BreadcrumbEntries as entry, i}
+      {@const isLast = i === BreadcrumbEntries.length - 1}
       <button
-        class="bg-(--dark-grey) px-1"
-        onclick={() => navigateToDirFromBreadcrumb(i)}
-        class:hover:underline={i < BreadcrumbEntries.length - 1}
-        class:!cursor-default={i >= BreadcrumbEntries.length - 1}
-        class:bg-transparent={i >= BreadcrumbEntries.length - 1}
+        type="button"
+        class="bg-(--dark-grey) px-1 transition-colors focus:outline-none focus:ring-1 focus:ring-(--terminal-green)"
+        class:hover:underline={!isLast}
+        class:opacity-80={isLast}
+        onclick={() => !isLast && navigateToDirFromBreadcrumb(i)}
+        aria-current={isLast ? "page" : undefined}
       >
         {entry.name}
       </button>
-      <span
-        class:hidden={i === BreadcrumbEntries.length - 1}
-        class="cursor-default">&gt;</span
-      >
+
+      {#if !isLast}
+        <span class="cursor-default select-none" aria-hidden="true">&gt;</span>
+      {/if}
     {/each}
   </div>
   <div id="dir-contents-container">
-    {#if isPageLoading}
+    {#if pageState === "initLoading"}
       <div class="text-md text-(--lighter-grey) text-center">Loading...</div>
     {:else if fsEntries}
       <div id="files" class="fsentries-grid">
         {#each fsEntries as fsEntry}
-          <FSentryCard entry={fsEntry} {selectedFiles} {toggleSelection} />
+          <FSentryCard
+            entry={fsEntry}
+            {selectedFiles}
+            {toggleSelection}
+            bind:pageState
+          />
         {/each}
       </div>
     {:else}
@@ -286,7 +292,7 @@
       use:focusOnMount
     />
     <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
-    <Button loading={isPageLoading} classes="w-full">Create</Button>
+    <Button loading={pageState === "loading"} classes="w-full">Create</Button>
   </form>
 {/snippet}
 

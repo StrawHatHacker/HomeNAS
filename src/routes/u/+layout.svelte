@@ -58,11 +58,12 @@
 
       <button
         onclick={toggleSidebarCollape}
-        class="hidden md:block hover:bg-(--normal-grey) transition-all p-1 rounded-md"
+        class="hidden md:block hover:bg-(--normal-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) transition-all p-1 rounded-md"
+        aria-label={$isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <img
           src="/icons/{$isSidebarCollapsed ? 'expand' : 'collapse'}.svg"
-          alt="Toggle"
+          alt=""
           class="h-6 w-6"
         />
       </button>
@@ -70,23 +71,24 @@
       {#if $isMobileOpen}
         <button
           onclick={toggleMobile}
-          class="md:hidden p-1 hover:bg-(--normal-grey) rounded-md transition-colors"
+          class="md:hidden p-1 hover:bg-(--normal-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) transition-colors"
+          aria-label="Close menu"
         >
-          <img src="/icons/close.svg" alt="Close Menu" class="h-6 w-6" />
+          <img src="/icons/close.svg" alt="" class="h-6 w-6" />
         </button>
       {/if}
     </header>
 
     <nav class="flex-1 flex flex-col justify-between p-2 overflow-x-hidden">
-      {#each Object.keys(sibarNavItems) as key, i}
-        <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1">
+        {#each Object.keys(sibarNavItems) as key}
           <span
             class="nav-title px-4 py-2 tracking-wider text-base uppercase"
             class:hidden={$isSidebarCollapsed && !$isMobileOpen}
           >
             {key}
           </span>
-          {#each sibarNavItems[key] as item, i}
+          {#each sibarNavItems[key] as item}
             <a
               class="nav-btn"
               class:active={isActive(item.href)}
@@ -94,18 +96,18 @@
               class:collapsed={$isSidebarCollapsed && !$isMobileOpen}
               href={item.href}
               onclick={() => {
-                // $isMobileOpen = false;
+                if ($isMobileOpen) toggleMobile();
               }}
               title={$isSidebarCollapsed ? item.name : ""}
             >
-              <img src="/icons/{item.icon}.svg" alt="" />
+              <img src="/icons/{item.icon}.svg" alt="" aria-hidden="true" />
               {#if !$isSidebarCollapsed || $isMobileOpen}
                 <span class="truncate">{item.name}</span>
               {/if}
             </a>
           {/each}
-        </div>
-      {/each}
+        {/each}
+      </div>
 
       <div class="flex flex-col gap-1">
         <button
@@ -114,7 +116,7 @@
           class:justify-center={$isSidebarCollapsed && !$isMobileOpen}
           title="Settings"
         >
-          <img src="/icons/settings.svg" alt="" />
+          <img src="/icons/settings.svg" alt="" aria-hidden="true" />
           {#if !$isSidebarCollapsed || $isMobileOpen}
             <span>Settings</span>
           {/if}
@@ -123,9 +125,9 @@
           type="button"
           class="nav-btn"
           class:justify-center={$isSidebarCollapsed && !$isMobileOpen}
-          title="Settings"
+          title="Logout"
         >
-          <img src="/icons/logout.svg" alt="" />
+          <img src="/icons/logout.svg" alt="" aria-hidden="true" />
           {#if !$isSidebarCollapsed || $isMobileOpen}
             <span>Logout</span>
           {/if}
@@ -135,7 +137,12 @@
           class="profile mt-2 px-4 py-3 overflow-hidden"
           class:justify-center={$isSidebarCollapsed && !$isMobileOpen}
         >
-          <img src="/icons/user.svg" alt="User" class="h-6 w-6 shrink-0" />
+          <img
+            src="/icons/user.svg"
+            alt=""
+            class="h-6 w-6 shrink-0"
+            aria-hidden="true"
+          />
           {#if !$isSidebarCollapsed || $isMobileOpen}
             <span class="truncate text-base">
               {data.user.name}
@@ -155,11 +162,16 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    @apply px-4 py-2 w-full transition-colors rounded-xs text-xl;
+    @apply px-4 py-2 w-full text-xl;
+
+    &:focus-visible {
+      outline: 1px solid var(--terminal-green);
+    }
 
     &:hover {
       background-color: var(--dark-grey);
     }
+
     &.active {
       background-color: var(--normal-grey);
     }

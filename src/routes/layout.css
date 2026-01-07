@@ -59,6 +59,10 @@ input[type="password"],
 input[type="email"] {
   border: 1px solid var(--normal-grey);
   @apply px-2 h-10 min-w-30 w-full;
+
+  &:focus-visible {
+    border-color: var(--terminal-green);
+  }
 }
 
 input[type="checkbox"] {
@@ -72,6 +76,7 @@ button {
 
 button:disabled {
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .text-xxs {
@@ -89,6 +94,10 @@ button:disabled {
 
   &:hover {
     background-color: var(--dark-grey);
+  }
+
+  &:focus-visible {
+    border-color: var(--terminal-green);
   }
 }
 
