@@ -10,6 +10,8 @@
   import { modal } from "$lib/stores/modal.svelte.js";
   import Button from "$lib/widgets/button.svelte";
   import { SvelteSet } from "svelte/reactivity";
+  import FsentryCard from "../../../lib/widgets/FSentryCard.svelte";
+  import FSentryCard from "../../../lib/widgets/FSentryCard.svelte";
 
   let { data } = $props();
 
@@ -17,7 +19,7 @@
   let createDirError = $state("");
   let viewType = $state<"grid" | "list">("grid");
   let isPageLoading = $state(false);
-  let selectedFiles = $state(new SvelteSet());
+  let selectedFiles = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
 
@@ -261,8 +263,8 @@
       <div class="text-md text-(--lighter-grey) text-center">Loading...</div>
     {:else if fsEntries}
       <div id="files" class="fsentries-grid">
-        {#each fsEntries as ddEntry}
-          {@render dirDataCard(ddEntry)}
+        {#each fsEntries as fsEntry}
+          <FSentryCard entry={fsEntry} {selectedFiles} {toggleSelection} />
         {/each}
       </div>
     {:else}
@@ -286,63 +288,6 @@
     <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
     <Button loading={isPageLoading} classes="w-full">Create</Button>
   </form>
-{/snippet}
-
-{#snippet dirDataCard(entry: FSEntries[0])}
-  <button
-    class="group relative flex flex-col w-full border border-(--normal-grey) overflow-clip hover:border-(--light-grey) duration-200 transition-all"
-    class:border-(--terminal-green)={selectedFiles.has(entry.id)}
-    class:hover:border-(--terminal-green)={selectedFiles.has(entry.id)}
-  >
-    {#if !entry.isDir}
-      <input
-        type="checkbox"
-        onclick={(e) => e.stopPropagation()}
-        onchange={() => toggleSelection(entry.id)}
-        checked={selectedFiles.has(entry.id)}
-        class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity"
-      />
-    {/if}
-    <div
-      class="h-32 w-full flex items-center justify-center flex-col overflow-hidden bg-(--darker-grey)"
-    >
-      {#if entry.isDir}
-        <img
-          src="/icons/folder.svg"
-          alt="Folder"
-          class="h-16 w-16 transition-transform duration-300 group-hover:scale-105"
-        />
-      {:else}
-        <div
-          class="flex flex-col items-center justify-center text-4xl font-bold text-(--light-grey) group-hover:text-(--lighter-grey) transition-colors tracking-tight"
-        >
-          <span>{entry.ext ?? ""}</span>
-          <span class="text-xs">{entry.mimeType ?? ""}</span>
-        </div>
-      {/if}
-    </div>
-
-    <div
-      class="flex flex-col justify-between p-2 h-24 border-t border-(--normal-grey) bg-black"
-    >
-      <p class="text-sm line-clamp-2 break-all transition-colors">
-        {entry.isDir ? entry.name : entry.baseName}
-      </p>
-
-      <div
-        class="flex text-xs flex-col justify-between items-center mt-auto text-(--lighter-grey)"
-      >
-        <span class="uppercase">
-          {entry.isDir ? "Folder" : new Date(entry.modifiedAt).toLocaleString()}
-        </span>
-        {#if !entry.isDir && entry.size}
-          <span class="">
-            {Math.round(entry.size / 1024)} KB
-          </span>
-        {/if}
-      </div>
-    </div>
-  </button>
 {/snippet}
 
 <WrapperHelper {title} {search} {content} {onFilesAdded} />
