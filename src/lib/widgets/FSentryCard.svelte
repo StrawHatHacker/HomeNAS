@@ -66,7 +66,10 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
       class="absolute inset-0 backface-hidden flex flex-col w-full h-full bg-black transform-front"
-      onclick={() => !isFlipped && toggleSelection(entry.id)}
+      onclick={(e) => {
+        e.stopPropagation();
+        // TODO show file
+      }}
     >
       {#if !entry.isDir}
         <input
@@ -75,7 +78,7 @@
           onclick={(e) => e.stopPropagation()}
           onchange={() => toggleSelection(entry.id)}
           checked={selectedFiles.has(entry.id)}
-          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity"
+          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
         />
       {/if}
 
