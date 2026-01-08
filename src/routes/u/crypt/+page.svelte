@@ -10,13 +10,19 @@
   import { modal } from "$lib/stores/modal.svelte.js";
   import Button from "$lib/widgets/button.svelte";
   import { SvelteSet } from "svelte/reactivity";
-  import FSentryCard from "../../../lib/widgets/FSEntryCard.svelte";
+  import FSentryCard from "$lib/widgets/FSEntryCard.svelte";
+  import {
+    LocalStorageUtil,
+    type FSEntryViewMode,
+  } from "$lib/utils/localstorageUtil.js";
 
   let { data } = $props();
 
   let createDirValue = $state("");
   let createDirError = $state("");
-  let viewType = $state<"grid" | "list">("grid");
+  let viewType = $state<FSEntryViewMode>(
+    LocalStorageUtil.defaultfsEntryViewMode
+  );
   let pageState = $state<"initLoading" | "loading" | "loaded">("initLoading");
   let selectedFiles = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
@@ -35,6 +41,8 @@
   );
 
   onMount(async () => {
+    viewType = LocalStorageUtil.fsEntryViewMode;
+
     const cryptData = data.user.rootFolder.subFolders.find(
       (f) => f.name === USER_FOLDERS_TYPES.crypt
     );
@@ -171,6 +179,16 @@
       console.error(error);
     }
   };
+
+  const toggleView = () => {
+    if (viewType === "list") {
+      viewType = "grid";
+      LocalStorageUtil.fsEntryViewMode = "grid";
+    } else {
+      viewType = "list";
+      LocalStorageUtil.fsEntryViewMode = "list";
+    }
+  };
 </script>
 
 <svelte:head>
@@ -183,7 +201,12 @@
 {/snippet}
 
 {#snippet search()}
-  <input type="text" placeholder="Search" bind:value={searchValue} class="max-w-80"/>
+  <input
+    type="text"
+    placeholder="Search"
+    bind:value={searchValue}
+    class="max-w-80"
+  />
   <!-- <button class="btn-simple btn-square">
     <img src="/icons/search.svg" alt="Search" class="h-6 w-6" />
   </button> -->
@@ -229,7 +252,7 @@
       <div class="w-full"></div>
       <button
         class="btn-simple btn-square shrink-0"
-        onclick={() => (viewType = viewType === "grid" ? "list" : "grid")}
+        onclick={toggleView}
         disabled={isPageLoading}
       >
         <img
@@ -267,7 +290,11 @@
     {#if pageState === "initLoading"}
       <div class="text-md text-(--lighter-grey) text-center">Loading...</div>
     {:else if fsEntries}
-      <div id="files" class="fsentries-grid">
+      <div
+        id="files"
+        class:fsentries-grid={viewType === "grid"}
+        class:fsentries-list={viewType === "list"}
+      >
         {#each fsEntries as fsEntry}
           {#if !searchValue || fsEntry.name
               .toLowerCase()
@@ -276,6 +303,7 @@
               entry={fsEntry}
               {selectedFiles}
               {toggleSelection}
+              {viewType}
               bind:pageState
             />
           {/if}
@@ -310,6 +338,12 @@
   .fsentries-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: 1rem;
+  }
+
+  .fsentries-list {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
   }
 </style>
