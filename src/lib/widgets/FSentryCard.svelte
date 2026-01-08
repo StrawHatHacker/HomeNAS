@@ -54,6 +54,7 @@
 >
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
+    id={entry.id.toString()}
     role="button"
     tabindex="0"
     class="group relative flex flex-col w-full h-full border transition-all duration-500 preserve-3d cursor-pointer focus:outline-none"

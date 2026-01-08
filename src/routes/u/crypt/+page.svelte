@@ -21,6 +21,7 @@
   let selectedFiles = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
+  let searchValue = $state("");
 
   let lastBreadcrumbEntry = $derived(
     BreadcrumbEntries[BreadcrumbEntries.length - 1]
@@ -29,6 +30,9 @@
     BreadcrumbEntries.map((e) => e.name).slice(1) // remove '/crypt'
   );
   let isSelectingFiles = $derived(selectedFiles.size > 0);
+  let isPageLoading = $derived(
+    pageState === "loading" || pageState === "initLoading"
+  );
 
   onMount(async () => {
     const cryptData = data.user.rootFolder.subFolders.find(
@@ -179,10 +183,10 @@
 {/snippet}
 
 {#snippet search()}
-  <input type="text" placeholder="Search" />
-  <button class="btn-simple btn-square">
+  <input type="text" placeholder="Search" bind:value={searchValue} class="max-w-80"/>
+  <!-- <button class="btn-simple btn-square">
     <img src="/icons/search.svg" alt="Search" class="h-6 w-6" />
-  </button>
+  </button> -->
 {/snippet}
 
 {#snippet content(openFileExplorer: () => void)}
@@ -191,14 +195,14 @@
       <button
         class="btn-simple shrink-0"
         onclick={selectAll}
-        disabled={pageState === "initLoading" || pageState === "loading"}
+        disabled={isPageLoading}
       >
         Select All
       </button>
       <button
         class="btn-simple shrink-0"
         onclick={deselectAll}
-        disabled={pageState === "initLoading" || pageState === "loading"}
+        disabled={isPageLoading}
       >
         Deselect All
       </button>
@@ -206,13 +210,13 @@
       <button
         class="btn-simple btn-square shrink-0"
         onclick={openFileExplorer}
-        disabled={pageState === "initLoading" || pageState === "loading"}
+        disabled={isPageLoading}
       >
         <img src="/icons/upload.svg" alt="" class="h-6 w-6" />
       </button>
       <button
         class="btn-simple btn-square shrink-0"
-        disabled={pageState === "initLoading" || pageState === "loading"}
+        disabled={isPageLoading}
         onclick={() =>
           modal.openSnippet(createFolderModal, {}, () => {
             createDirValue = "";
@@ -226,7 +230,7 @@
       <button
         class="btn-simple btn-square shrink-0"
         onclick={() => (viewType = viewType === "grid" ? "list" : "grid")}
-        disabled={pageState === "initLoading" || pageState === "loading"}
+        disabled={isPageLoading}
       >
         <img
           src={viewType === "grid" ? "/icons/grid.svg" : "/icons/list.svg"}
@@ -265,12 +269,16 @@
     {:else if fsEntries}
       <div id="files" class="fsentries-grid">
         {#each fsEntries as fsEntry}
-          <FSentryCard
-            entry={fsEntry}
-            {selectedFiles}
-            {toggleSelection}
-            bind:pageState
-          />
+          {#if !searchValue || fsEntry.name
+              .toLowerCase()
+              .includes(searchValue.toLowerCase())}
+            <FSentryCard
+              entry={fsEntry}
+              {selectedFiles}
+              {toggleSelection}
+              bind:pageState
+            />
+          {/if}
         {/each}
       </div>
     {:else}
