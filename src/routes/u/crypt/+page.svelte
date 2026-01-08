@@ -272,11 +272,14 @@
       {@const isLast = i === BreadcrumbEntries.length - 1}
       <button
         type="button"
-        class="bg-(--dark-grey) px-1 transition-colors focus:outline-none focus:ring-1 focus:ring-(--terminal-green)"
+        class="bg-(--dark-grey) px-1 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-(--terminal-green)"
         class:hover:underline={!isLast}
         class:opacity-80={isLast}
+        class:cursor-default!={isLast}
+        class:focus-visible:ring-0={isLast}
         onclick={() => !isLast && navigateToDirFromBreadcrumb(i)}
         aria-current={isLast ? "page" : undefined}
+        tabindex={isLast ? -1 : 0}
       >
         {entry.name}
       </button>
@@ -344,6 +347,6 @@
   .fsentries-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
   }
 </style>

@@ -58,7 +58,7 @@
 
       <button
         onclick={toggleSidebarCollape}
-        class="hidden md:block hover:bg-(--normal-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) transition-all p-1 rounded-md"
+        class="hidden md:block hover:bg-(--normal-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) transition-all p-1"
         aria-label={$isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <img

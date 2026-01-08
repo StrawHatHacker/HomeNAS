@@ -53,7 +53,7 @@
 
 {#if viewType === "grid"}
   <div
-    class="perspective-distant w-full h-56"
+    class="perspective-distant w-full h-60"
     class:opacity-50={pageState === "initLoading" || pageState === "loading"}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -74,12 +74,12 @@
       oncontextmenu={handleRightClick}
       onkeydown={handleKeyDown}
     >
+      <!-- FRONT -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <div
         class="absolute inset-0 backface-hidden flex flex-col w-full h-full bg-black transform-front"
         onclick={(e) => {
           e.stopPropagation();
-          // TODO show file
         }}
       >
         {#if !entry.isDir}
@@ -89,41 +89,43 @@
             onclick={(e) => e.stopPropagation()}
             onchange={() => toggleSelection(entry.id)}
             checked={selectedFiles.has(entry.id)}
-            class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+            class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0
+                 group-hover:opacity-100 group-focus:opacity-100
+                 checked:opacity-100 transition-opacity cursor-pointer"
           />
         {/if}
 
         <div
           class="h-1/2 w-full flex items-center justify-center flex-col overflow-hidden bg-(--darker-grey)"
         >
-          {#if entry.isDir}
-            <img
-              src="/icons/folder.svg"
-              alt="Folder"
-              class="h-16 w-16 transition-transform duration-300 group-hover:scale-105"
-            />
-          {:else}
-            <div
-              class="flex flex-col items-center justify-center text-4xl font-bold text-(--light-grey) group-hover:text-(--lighter-grey) transition-colors tracking-tight"
-            >
-              <span>{entry.ext ?? ""}</span>
-              <span class="text-xs">{entry.mimeType ?? ""}</span>
-            </div>
-          {/if}
+          <img
+            src={entry.isDir ? "/icons/folder.svg" : "/icons/fileOutlined.svg"}
+            alt=""
+            class="h-16 w-16 transition-all duration-300 opacity-50 group-hover:opacity-80"
+          />
+          <span
+            class="text-(--light-grey) font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
+            >{entry.isDir ? "" : entry.ext}</span
+          >
         </div>
 
         <div
           class="flex flex-col justify-between p-2 h-1/2 border-t border-(--normal-grey) bg-black overflow-hidden"
         >
-          <p
-            class="text-sm line-clamp-2 wrap-break-word overflow-hidden transition-colors text-(--terminal-green)"
-          >
-            {entry.isDir ? entry.name : entry.baseName}
+          <p class="text-sm text-(--terminal-green) line-clamp-2 break-all">
+            {entry.name}
           </p>
 
           <div
             class="flex text-xs flex-col justify-between items-center mt-auto text-(--lighter-grey)"
           >
+            {#if !entry.isDir && entry.mimeType}
+              <span
+                class="text-xs text-(--lighter-grey) line-clamp-2 break-all"
+              >
+                {entry.mimeType}
+              </span>
+            {/if}
             <span class="uppercase">
               {entry.isDir
                 ? "Folder"
@@ -136,13 +138,14 @@
         </div>
       </div>
 
+      <!-- BACK -->
       <div
         class="absolute inset-0 backface-hidden rotate-y-180 bg-black p-4 flex flex-col w-full items-start gap-2 border border-(--normal-grey) transform-back"
       >
         <p
           class="text-(--terminal-green) text-xs line-clamp-2 break-all w-full"
         >
-          {entry.isDir ? "FOLDER" : ""}
+          {entry.isDir ? "FOLDER " : ""}
           {entry.name}
         </p>
 
@@ -175,9 +178,15 @@
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="group border border-(--normal-grey) h-16 grid grid-cols-[4rem_1fr_14rem_6rem] items-center px-4 gap-4 hover:border-(--light-grey) transition-all duration-300 focus:ring-1 focus:ring-(--terminal-green) relative"
+    class="group border border-(--normal-grey) p-2
+           flex flex-col gap-2
+           lg:grid lg:grid-cols-[2rem_minmax(0,1fr)_14rem_6rem] lg:items-center lg:gap-4
+           hover:border-(--light-grey) transition-all duration-300
+           focus:ring-1 focus:ring-(--terminal-green) relative"
     tabindex="0"
     onkeydown={handleKeyDown}
+    class:ring-1={selectedFiles.has(entry.id)}
+    class:ring-white={selectedFiles.has(entry.id)}
   >
     {#if !entry.isDir}
       <input
@@ -186,37 +195,67 @@
         onclick={(e) => e.stopPropagation()}
         onchange={() => toggleSelection(entry.id)}
         checked={selectedFiles.has(entry.id)}
-        class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+        class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0
+               group-hover:opacity-100 group-focus:opacity-100
+               checked:opacity-100 transition-opacity cursor-pointer"
       />
     {/if}
 
-    <div class="shrink-0 flex justify-center">
+    <div class="flex items-center gap-2 shrink-0">
       {#if entry.isDir}
         <img
           src="/icons/folder.svg"
           alt="Folder"
-          class="h-8 transition-transform duration-300 group-hover:scale-110"
+          class="h-8 w-8 transition-transform duration-300 group-hover:scale-110"
         />
       {:else}
-        <div
-          class="font-bold text-(--light-grey) group-hover:text-(--lighter-grey) transition-colors tracking-tight text-center"
+        <img
+          src="/icons/file.svg"
+          alt="File"
+          class="h-8 w-8 transition-transform duration-300 group-hover:scale-110"
+        />
+      {/if}
+
+      <div class="lg:hidden min-w-0">
+        <span
+          class="block text-sm text-(--terminal-green)
+                 line-clamp-2 break-all"
         >
-          <span class="block">{entry.ext ?? ""}</span>
-          <span class="text-xs block break-all">
-            {entry.mimeType ?? ""}
+          {entry.name}
+        </span>
+        {#if !entry.isDir && entry.mimeType}
+          <span
+            class="block text-xs text-(--lighter-grey)
+                   line-clamp-2 break-all"
+          >
+            {entry.mimeType}
           </span>
-        </div>
+        {/if}
+      </div>
+    </div>
+
+    <div class="hidden lg:block min-w-0">
+      <span
+        class="block text-sm text-(--terminal-green)
+               line-clamp-2 break-all"
+      >
+        {entry.name}
+      </span>
+      {#if !entry.isDir && entry.mimeType}
+        <span
+          class="block text-xs text-(--lighter-grey)
+                 line-clamp-2 break-all"
+        >
+          {entry.mimeType}
+        </span>
       {/if}
     </div>
 
-    <div class="min-w-0">
-      <span class="line-clamp-2 break-all text-sm text-(--terminal-green)">
-        {entry.isDir ? entry.name : entry.baseName}
-      </span>
-    </div>
-
     <div
-      class="flex text-xs flex-col justify-center items-end text-right text-(--lighter-grey) whitespace-nowrap"
+      class="flex text-xs text-(--lighter-grey)
+             flex-row justify-between items-center
+             lg:flex-col lg:items-end lg:text-right lg:whitespace-nowrap
+             shrink-0"
     >
       <span class="uppercase">
         {entry.isDir ? "Folder" : new Date(entry.modifiedAt).toLocaleString()}
@@ -226,11 +265,11 @@
       {/if}
     </div>
 
-    <div class="flex justify-end gap-2">
-      <button class="btn-simple btn-square">
+    <div class="flex justify-end gap-2 shrink-0">
+      <button class="btn-simple btn-square" aria-label="Rename">
         <img src="/icons/edit.svg" alt="" class="h-6 w-6" />
       </button>
-      <button class="btn-simple btn-square">
+      <button class="btn-simple btn-square" aria-label="Delete">
         <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
       </button>
     </div>
