@@ -40,4 +40,35 @@ export class NAS {
 
         return finalPath;
     }
+
+    static async renameFSEntry(
+        userFolder: UserFolderType,
+        relativePath: string,
+        folderType: UserFolderType,
+        oldName: string,
+        newName: string
+    ) {
+        const targetDir = path.join(watchPath, userFolder, folderType, relativePath);
+        const oldPath = path.join(targetDir, oldName);
+        const newPath = path.join(targetDir, newName);
+
+        // 1. Verify the source exists
+        try {
+            await fs.access(oldPath);
+        } catch {
+            throw new Error(`Item does not exist: ${userFolder}/${folderType}/${relativePath}/${oldName}`);
+        }
+
+        // 2. Prevent overwriting an existing file/folder
+        try {
+            await fs.access(newPath);
+            throw new Error(`The name "${newName}" is already taken in this folder.`);
+        } catch (err: any) {
+            // If the error is 'ENOENT', it means the path is available, which is what we want.
+            if (err.code !== 'ENOENT') throw err;
+        }
+
+        // 3. Perform the rename (works for both files and directories)
+        await fs.rename(oldPath, newPath);
+    }
 }

@@ -17,7 +17,7 @@ export type UploadTask = {
      *  The id of the target directory
      *  Helps with creating entries in the database
      */
-    targetDirId: number;
+    parentId: number;
     mimeType: string;
     checksum: string;
     xhr?: XMLHttpRequest;
@@ -36,7 +36,7 @@ class UploaderQueueStore {
     queue = $derived(this.tasks.filter(t => t.status === 'waiting'));
 
     // Add new files to queue
-    async queueFiles(fileList: FileList, relativePath: string[], targetDirId: number, folderType: UserFolderType) {
+    async queueFiles(fileList: FileList, relativePath: string[], parentId: number, folderType: UserFolderType) {
         const taskPromises = Array.from(fileList).map(async (file) => {
             // Calculate the checksum here
             const checksumValue = await FileUtil.getChecksum(file);
@@ -48,7 +48,7 @@ class UploaderQueueStore {
                 folderType,
                 status: 'waiting',
                 relativePath,
-                targetDirId,
+                parentId,
                 mimeType: file.type,
                 checksum: checksumValue, // This is now a string
             };
@@ -125,11 +125,11 @@ class UploaderQueueStore {
         formData.append('file', task.file);
         formData.append('folderType', task.folderType);
         formData.append('relativePath', task.relativePath.join('/'));
-        formData.append('targetDirId', task.targetDirId.toString());
+        formData.append('parentId', task.parentId.toString());
         formData.append('mimeType', task.mimeType);
         formData.append('checksum', task.checksum);
 
-        xhr.open('POST', '/api/files/upload');
+        xhr.open('POST', '/api/fsentries');
         xhr.send(formData);
     }
 }

@@ -1,5 +1,5 @@
 // Only import types from server, else you will get a nasty error
-import type { getFSEntries, getSession } from "./server/queries";
+import type { getFSEntriesOfDir, getSession } from "./server/queries";
 
 export type Only<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
 export type Either<T, U> = Only<U, T> | Only<T, U>;
@@ -33,4 +33,4 @@ export type BreadCrumbsEntry = {
     id: number; name: string
 }
 
-export type FSEntries = ReturnType<typeof getFSEntries>;
+export type FSEntries = ReturnType<typeof getFSEntriesOfDir>;

@@ -51,6 +51,6 @@
     overflow: clip;
     padding: 1rem;
     border: 1px solid var(--normal-grey);
-    @apply py-4 px-6;
+    @apply py-4 px-6 cursor-default;
   }
 </style>

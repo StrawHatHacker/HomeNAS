@@ -36,4 +36,33 @@ export class FileUtil {
 
         return `${parseFloat((size / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     }
+
+    /**
+     * Sanitizes a string to be safe for filesystem storage.
+     * - Removes null bytes
+     * - Removes illegal OS characters
+     * - Trims whitespace and trailing dots
+     */
+    static sanitizeFilename(name: string): string {
+        // Remove control characters and null bytes
+        // Remove reserved characters: < > : " / \ | ? *
+        let cleanName = name
+            .replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
+            .replace(/[<>:"/\\|?*]/g, "");
+
+        // Windows doesn't allow names to end in a space or a dot
+        cleanName = cleanName.trim().replace(/[.]+$/, "");
+
+        // Ensure name isn't empty after cleaning
+        if (cleanName.length === 0) {
+            throw new Error("Name should not be empty and not contain forbidden characters.");
+        }
+
+        // Optional: Limit length (usually 255 chars max for most filesystems)
+        if (cleanName.length > 255) {
+            throw new Error("Name is too long. 255 characters max.");
+        }
+
+        return cleanName;
+    }
 }

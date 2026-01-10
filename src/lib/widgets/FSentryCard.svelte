@@ -2,23 +2,41 @@
   import type { FSEntries } from "$lib/types";
   import { FileUtil } from "$lib/utils/fileUtil";
   import type { FSEntryViewMode } from "$lib/utils/localstorageUtil";
+  import { focusOnMount } from "$lib/utils/ui";
   import type { SvelteSet } from "svelte/reactivity";
+  import Button from "./button.svelte";
+  import { onMount } from "svelte";
+  import { modal } from "$lib/stores/modal.svelte";
 
   let {
     entry,
     selectedFiles,
     toggleSelection,
+    rename,
     pageState = $bindable(),
     viewType,
+    renameError,
   }: {
     entry: FSEntries[0];
     selectedFiles: SvelteSet<number>;
     toggleSelection: (id: number) => void;
+    rename: (
+      id: number,
+      oldName: string,
+      newName: string,
+      isDir: boolean
+    ) => void;
     pageState: "initLoading" | "loading" | "loaded";
     viewType: FSEntryViewMode;
+    renameError: string;
   } = $props();
 
   let isFlipped = $state(false);
+  let renameValue = $state("");
+
+  onMount(() => {
+    renameValue = entry.name;
+  });
 
   function handleRightClick(e: MouseEvent) {
     e.preventDefault();
@@ -44,11 +62,6 @@
     // Flip all the cards to the front if the user selects a card
     if (selectedFiles.size > 0) isFlipped = false;
   });
-
-  const rename = async (e: MouseEvent) => {
-    e.stopPropagation();
-    // TODO open rename modal with a callback from parent
-  };
 </script>
 
 {#if viewType === "grid"}
@@ -154,7 +167,7 @@
           <button
             class="btn-simple text-sm justify-start!"
             tabindex={isFlipped ? 0 : -1}
-            onclick={rename}
+            onclick={() => modal.openSnippet(createRenameModal)}
             disabled={pageState === "initLoading" || pageState === "loading"}
           >
             &gt; RENAME
@@ -218,15 +231,13 @@
 
       <div class="lg:hidden min-w-0">
         <span
-          class="block text-sm text-(--terminal-green)
-                 line-clamp-2 break-all"
+          class="block text-sm text-(--terminal-green) line-clamp-2 break-all"
         >
           {entry.name}
         </span>
         {#if !entry.isDir && entry.mimeType}
           <span
-            class="block text-xs text-(--lighter-grey)
-                   line-clamp-2 break-all"
+            class="block text-xs text-(--lighter-grey) line-clamp-2 break-all"
           >
             {entry.mimeType}
           </span>
@@ -236,15 +247,13 @@
 
     <div class="hidden lg:block min-w-0">
       <span
-        class="block text-sm text-(--terminal-green)
-               line-clamp-2 break-all"
+        class="block text-sm text-(--terminal-green) line-clamp-2 break-all"
       >
         {entry.name}
       </span>
       {#if !entry.isDir && entry.mimeType}
         <span
-          class="block text-xs text-(--lighter-grey)
-                 line-clamp-2 break-all"
+          class="block text-xs text-(--lighter-grey) line-clamp-2 break-all"
         >
           {entry.mimeType}
         </span>
@@ -252,10 +261,7 @@
     </div>
 
     <div
-      class="flex text-xs text-(--lighter-grey)
-             flex-row justify-between items-center
-             lg:flex-col lg:items-end lg:text-right lg:whitespace-nowrap
-             shrink-0"
+      class="flex text-xs text-(--lighter-grey) flex-row justify-between items-center lg:flex-col lg:items-end lg:text-right lg:whitespace-nowrap shrink-0"
     >
       <span class="uppercase">
         {entry.isDir ? "Folder" : new Date(entry.modifiedAt).toLocaleString()}
@@ -266,15 +272,46 @@
     </div>
 
     <div class="flex justify-end gap-2 shrink-0">
-      <button class="btn-simple btn-square" aria-label="Rename">
+      <button
+        class="btn-simple btn-square"
+        aria-label="Rename"
+        onclick={() => modal.openSnippet(createRenameModal)}
+        disabled={pageState === "initLoading" ||
+          pageState === "loading" ||
+          selectedFiles.size > 0}
+      >
         <img src="/icons/edit.svg" alt="" class="h-6 w-6" />
       </button>
-      <button class="btn-simple btn-square" aria-label="Delete">
+      <button
+        class="btn-simple btn-square"
+        aria-label="Delete"
+        disabled={pageState === "initLoading" ||
+          pageState === "loading" ||
+          selectedFiles.size > 0}
+      >
         <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
       </button>
     </div>
   </div>
 {/if}
+
+{#snippet createRenameModal()}
+  <form
+    onsubmit={() => rename(entry.id, entry.name, renameValue, entry.isDir)}
+    class="flex flex-col gap-2"
+  >
+    <h2 class="text-start">Rename: {entry.name}</h2>
+    <!-- svelte-ignore a11y_autofocus -->
+    <input
+      type="text"
+      placeholder="New name"
+      bind:value={renameValue}
+      use:focusOnMount
+    />
+    <span class="text-xs text-(--clr-error) break-all">{renameError}</span>
+    <Button loading={pageState === "loading"} classes="w-full">Rename</Button>
+  </form>
+{/snippet}
 
 <style>
   .preserve-3d {

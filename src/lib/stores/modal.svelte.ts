@@ -1,4 +1,3 @@
-// src/lib/stores/modal.svelte.ts
 import type { Component, Snippet } from "svelte";
 
 type ModalContent =

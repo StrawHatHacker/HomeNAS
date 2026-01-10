@@ -7,7 +7,7 @@
     type BreadCrumbsEntry,
     type FSEntries,
   } from "$lib/types.js";
-  import { modal } from "$lib/stores/modal.svelte.js";
+  import { modal } from "$lib/stores/modal.svelte";
   import Button from "$lib/widgets/button.svelte";
   import { SvelteSet } from "svelte/reactivity";
   import FSentryCard from "$lib/widgets/FSEntryCard.svelte";
@@ -15,11 +15,14 @@
     LocalStorageUtil,
     type FSEntryViewMode,
   } from "$lib/utils/localstorageUtil.js";
+  import { focusOnMount } from "$lib/utils/ui";
+  import { FileUtil } from "$lib/utils/fileUtil.js";
 
   let { data } = $props();
 
   let createDirValue = $state("");
   let createDirError = $state("");
+  let renameError = $state("");
   let viewType = $state<FSEntryViewMode>(
     LocalStorageUtil.defaultfsEntryViewMode
   );
@@ -72,7 +75,7 @@
       pageState = initLoading ? "initLoading" : "loading";
 
       const res = await fetch(
-        `/api/files/dir?currentDirId=${lastBreadcrumbEntry.id}`,
+        `/api/dir?currentDirId=${lastBreadcrumbEntry.id}`,
         {
           method: "GET",
         }
@@ -95,7 +98,7 @@
       pageState = "loading";
       modal.isLoading = true;
 
-      const res = await fetch("/api/files/dir", {
+      const res = await fetch("/api/dir", {
         method: "POST",
         body: JSON.stringify({
           dirName: createDirValue,
@@ -121,12 +124,60 @@
     }
   };
 
+  const rename = async (
+    fsEntryId: number,
+    oldName: string,
+    newName: string,
+    isDir: boolean
+  ) => {
+    try {
+      modal.isLoading = true;
+      renameError = "";
+
+      if (
+        pageState !== "loaded" ||
+        fsEntryId === undefined ||
+        !newName.trim() ||
+        isDir === undefined
+      )
+        return;
+
+      pageState = "loading";
+
+      const res = await fetch("/api/fsentries", {
+        method: "PUT",
+        body: JSON.stringify({
+          relativePath: relativePathToCrypt.join("/"),
+          folderType: USER_FOLDERS_TYPES.crypt,
+          oldName,
+          newName,
+          fsEntryId,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.message);
+      }
+
+      modal.close();
+      fsEntries = fsEntries.map((f) => {
+        if (f.id === fsEntryId) f.name = newName;
+        return f;
+      });
+    } catch (e) {
+      if (e instanceof Error) renameError = e.message;
+      else renameError = "Failed to rename file.";
+    } finally {
+      pageState = "loaded";
+      modal.isLoading = false;
+    }
+  };
+
   const navigateToDirFromBreadcrumb = (index: number) => {
     if (index < 0 || index === BreadcrumbEntries.length - 1) return;
     BreadcrumbEntries = BreadcrumbEntries.slice(0, index + 1);
   };
-
-  const focusOnMount = (node: HTMLElement) => node.focus();
 
   const toggleSelection = (id: number) => {
     selectedFiles.has(id) ? selectedFiles.delete(id) : selectedFiles.add(id);
@@ -147,9 +198,12 @@
     if (!areWeInThisDir()) return;
 
     try {
-      const res = await fetch(`/api/files/getBy?checksum=${task.checksum}`, {
-        method: "GET",
-      });
+      const res = await fetch(
+        `/api/fsentries/getBy?checksum=${task.checksum}`,
+        {
+          method: "GET",
+        }
+      );
       let body = (await res.json()) as FSEntries[0];
       if (!res.ok) throw new Error((body as any).message);
 
@@ -298,7 +352,7 @@
         class:fsentries-grid={viewType === "grid"}
         class:fsentries-list={viewType === "list"}
       >
-        {#each fsEntries as fsEntry}
+        {#each fsEntries as fsEntry (fsEntry.id)}
           {#if !searchValue || fsEntry.name
               .toLowerCase()
               .includes(searchValue.toLowerCase())}
@@ -306,7 +360,9 @@
               entry={fsEntry}
               {selectedFiles}
               {toggleSelection}
+              {rename}
               {viewType}
+              {renameError}
               bind:pageState
             />
           {/if}

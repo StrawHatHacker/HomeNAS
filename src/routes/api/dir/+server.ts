@@ -5,6 +5,7 @@ import { error, json } from "@sveltejs/kit";
 import * as Queries from "$lib/server/queries";
 import { errorMap } from "$lib/server/errorMap";
 
+// CREATE DIRECTORY
 export const POST = async ({ request, getClientAddress, cookies }) => {
     Auth.checkRatelimit(request, getClientAddress);
     const session = Auth.verifySession(cookies);
@@ -18,7 +19,7 @@ export const POST = async ({ request, getClientAddress, cookies }) => {
         // TODO transaction
 
         // No point in creating a directory if it already exists
-        const dir = Queries.getDir(data.dirName, session.user.id, data.parentDirId);
+        const dir = Queries.getDirByName(data.dirName, session.user.id, data.parentDirId);
         if (dir) throw new Error('Directory already exists.');
 
         // Check if parent directory exists
@@ -49,6 +50,7 @@ const validatePOSTBody = (body: any): DataOrErr<{ dirName: string, relativePath:
     return { ok: true, data: body };
 }
 
+// GET ALL CONTENTS OF A DIRECTORY (files and directories)
 export const GET = async ({ request, getClientAddress, cookies, url }) => {
     Auth.checkRatelimit(request, getClientAddress);
     const session = Auth.verifySession(cookies);
@@ -58,7 +60,7 @@ export const GET = async ({ request, getClientAddress, cookies, url }) => {
 
     const currentDirId = Number(QcurrentDirId);
 
-    const dirContents = Queries.getFSEntries(currentDirId, session.user.id);
+    const dirContents = Queries.getFSEntriesOfDir(currentDirId, session.user.id);
 
     return json(dirContents);
 }
