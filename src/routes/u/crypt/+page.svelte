@@ -1,27 +1,26 @@
 <script lang="ts">
   import { Uploader } from "$lib/stores/uploader.svelte";
-  import { onMount } from "svelte";
-  import WrapperHelper from "../wrapperHelper.svelte";
   import {
     USER_FOLDERS_TYPES,
     type BreadCrumbsEntry,
     type FSEntries,
+    type ModalState,
   } from "$lib/types.js";
-  import { modal } from "$lib/stores/modal.svelte";
-  import Button from "$lib/widgets/button.svelte";
-  import { SvelteSet } from "svelte/reactivity";
-  import FSentryCard from "$lib/widgets/FSEntryCard.svelte";
   import {
     LocalStorageUtil,
     type FSEntryViewMode,
   } from "$lib/utils/localstorageUtil.js";
   import { focusOnMount } from "$lib/utils/ui";
-  import { FileUtil } from "$lib/utils/fileUtil.js";
+  import Button from "$lib/widgets/button.svelte";
+  import FSentryCard from "$lib/widgets/FSEntryCard.svelte";
+  import { onMount } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
+  import WrapperHelper from "../wrapperHelper.svelte";
+  import Modal from "$lib/widgets/modal.svelte";
 
   let { data } = $props();
 
   let createDirValue = $state("");
-  let createDirError = $state("");
   let renameError = $state("");
   let viewType = $state<FSEntryViewMode>(
     LocalStorageUtil.defaultfsEntryViewMode
@@ -31,6 +30,11 @@
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
   let searchValue = $state("");
+
+  let createDirModalState = $state<ModalState>("closed");
+  let createDirError = $state("");
+
+  let isRenameModalOpen = $state(false);
 
   let lastBreadcrumbEntry = $derived(
     BreadcrumbEntries[BreadcrumbEntries.length - 1]
@@ -96,7 +100,7 @@
     try {
       if (pageState !== "loaded" || createDirValue === "") return;
       pageState = "loading";
-      modal.isLoading = true;
+      createDirModalState = "loading";
 
       const res = await fetch("/api/dir", {
         method: "POST",
@@ -113,64 +117,14 @@
         throw new Error(body.message);
       }
 
-      modal.close();
+      createDirModalState = "closed";
       await getCurrentDirData();
     } catch (e) {
       if (e instanceof Error) createDirError = e.message;
       else createDirError = "Failed to create directory.";
+      createDirModalState = "open";
     } finally {
       pageState = "loaded";
-      modal.isLoading = false;
-    }
-  };
-
-  const rename = async (
-    fsEntryId: number,
-    oldName: string,
-    newName: string,
-    isDir: boolean
-  ) => {
-    try {
-      modal.isLoading = true;
-      renameError = "";
-
-      if (
-        pageState !== "loaded" ||
-        fsEntryId === undefined ||
-        !newName.trim() ||
-        isDir === undefined
-      )
-        return;
-
-      pageState = "loading";
-
-      const res = await fetch("/api/fsentries", {
-        method: "PUT",
-        body: JSON.stringify({
-          relativePath: relativePathToCrypt.join("/"),
-          folderType: USER_FOLDERS_TYPES.crypt,
-          oldName,
-          newName,
-          fsEntryId,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.message);
-      }
-
-      modal.close();
-      fsEntries = fsEntries.map((f) => {
-        if (f.id === fsEntryId) f.name = newName;
-        return f;
-      });
-    } catch (e) {
-      if (e instanceof Error) renameError = e.message;
-      else renameError = "Failed to rename file.";
-    } finally {
-      pageState = "loaded";
-      modal.isLoading = false;
     }
   };
 
@@ -243,11 +197,34 @@
       LocalStorageUtil.fsEntryViewMode = "list";
     }
   };
+
+  const onRename = (fsEntryId: number, newName: string) => {
+    fsEntries = fsEntries.map((f) => {
+      if (f.id === fsEntryId) f.name = newName;
+      return f;
+    });
+  };
+
+  const deleteFSEntries = (ids: number[]) => {};
 </script>
 
 <svelte:head>
   <title>HomeNAS - Crypt</title>
 </svelte:head>
+
+<Modal modalState={createDirModalState}>
+  <form onsubmit={createFolder} class="flex flex-col gap-2">
+    <h2 class="text-start">Create Folder</h2>
+    <input
+      type="text"
+      placeholder="Folder name"
+      bind:value={createDirValue}
+      use:focusOnMount
+    />
+    <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
+    <Button loading={pageState === "loading"} classes="w-full">Create</Button>
+  </form>
+</Modal>
 
 {#snippet title()}
   <p>Crypt</p>
@@ -294,12 +271,7 @@
       <button
         class="btn-simple btn-square shrink-0"
         disabled={isPageLoading}
-        onclick={() =>
-          modal.openSnippet(createFolderModal, {}, () => {
-            createDirValue = "";
-            createDirError = "";
-            pageState = "loaded";
-          })}
+        onclick={() => (createDirModalState = "open")}
       >
         <img src="/icons/addFolder.svg" alt="" class="h-6 w-6" />
       </button>
@@ -360,9 +332,9 @@
               entry={fsEntry}
               {selectedFiles}
               {toggleSelection}
-              {rename}
+              {relativePathToCrypt}
               {viewType}
-              {renameError}
+              {onRename}
               bind:pageState
             />
           {/if}
@@ -374,21 +346,6 @@
       </div>
     {/if}
   </div>
-{/snippet}
-
-{#snippet createFolderModal()}
-  <form onsubmit={createFolder} class="flex flex-col gap-2">
-    <h2 class="text-start">Create Folder</h2>
-    <!-- svelte-ignore a11y_autofocus -->
-    <input
-      type="text"
-      placeholder="Folder name"
-      bind:value={createDirValue}
-      use:focusOnMount
-    />
-    <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
-    <Button loading={pageState === "loading"} classes="w-full">Create</Button>
-  </form>
 {/snippet}
 
 <WrapperHelper {title} {search} {content} {onFilesAdded} />

@@ -17,3 +17,7 @@ This will give me the opportunity to work on something more hands-on instead of 
 
 #### Credits
 [Heroicons](https://heroicons.com/)
+
+#### Notes
+Architecturally, I'm trying to mimic the file system structure in the database. It would be easier if I could just dump every file in one folder and have the database as the source of truth. But if you ever wanted to FTP a file you would have to manually add in which folder it should be under in the database.
+Alternatively, I could have the uploads "side effect" their entry in the database (using chokindar listeners) instead of adding them on every request. The performance benefit will be negligible and it could cause race conditions.

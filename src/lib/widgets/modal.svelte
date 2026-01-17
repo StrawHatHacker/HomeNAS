@@ -1,14 +1,25 @@
 <script lang="ts">
-  import { modal } from "$lib/stores/modal.svelte";
+  import type { ModalState } from "$lib/types";
+  import type { Snippet, SvelteComponent } from "svelte";
   import { fade, scale } from "svelte/transition";
+
+  let {
+    modalState: modalState,
+    children,
+  }: {
+    modalState: ModalState;
+    children: Snippet;
+  } = $props();
+
+  let isLoading = $state(false);
 </script>
 
-{#if modal.isOpen && modal.content}
+{#if modalState === "open" || modalState === "loading"}
   <div
     class="modal-backdrop"
     transition:fade={{ duration: 200 }}
     onclick={() => {
-      if (!modal.isLoading) modal.close();
+      if (!isLoading) modalState = "closed";
     }}
     role="presentation"
   >
@@ -20,11 +31,7 @@
       aria-modal="true"
       tabindex="-1"
     >
-      {#if modal.content.type === "snippet"}
-        {@render modal.content.value(modal.content.props)}
-      {:else}
-        <svelte:component this={modal.content.value} {...modal.content.props} />
-      {/if}
+      {@render children()}
     </button>
   </div>
 {/if}

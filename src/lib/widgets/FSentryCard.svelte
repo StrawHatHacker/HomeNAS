@@ -1,38 +1,39 @@
 <script lang="ts">
-  import type { FSEntries } from "$lib/types";
+  import {
+    USER_FOLDERS_TYPES,
+    type FSEntries,
+    type ModalState,
+  } from "$lib/types";
   import { FileUtil } from "$lib/utils/fileUtil";
   import type { FSEntryViewMode } from "$lib/utils/localstorageUtil";
   import { focusOnMount } from "$lib/utils/ui";
   import type { SvelteSet } from "svelte/reactivity";
   import Button from "./button.svelte";
   import { onMount } from "svelte";
-  import { modal } from "$lib/stores/modal.svelte";
+  import Modal from "./modal.svelte";
 
   let {
     entry,
     selectedFiles,
     toggleSelection,
-    rename,
     pageState = $bindable(),
+    relativePathToCrypt,
     viewType,
-    renameError,
+    onRename,
   }: {
     entry: FSEntries[0];
     selectedFiles: SvelteSet<number>;
     toggleSelection: (id: number) => void;
-    rename: (
-      id: number,
-      oldName: string,
-      newName: string,
-      isDir: boolean
-    ) => void;
     pageState: "initLoading" | "loading" | "loaded";
+    relativePathToCrypt: string[];
     viewType: FSEntryViewMode;
-    renameError: string;
+    onRename: (fsEntryId: number, newName: string) => void;
   } = $props();
 
   let isFlipped = $state(false);
   let renameValue = $state("");
+  let renameModalState = $state<ModalState>("closed");
+  let renameError = $state("");
 
   onMount(() => {
     renameValue = entry.name;
@@ -62,6 +63,41 @@
     // Flip all the cards to the front if the user selects a card
     if (selectedFiles.size > 0) isFlipped = false;
   });
+
+  const rename = async () => {
+    try {
+      if (pageState !== "loaded" || !renameValue.trim()) return;
+
+      renameError = "";
+      renameModalState = "loading";
+      pageState = "loading";
+
+      const res = await fetch("/api/fsentries", {
+        method: "PUT",
+        body: JSON.stringify({
+          relativePath: relativePathToCrypt.join("/"),
+          folderType: USER_FOLDERS_TYPES.crypt,
+          oldName: entry.name,
+          newName: renameValue,
+          fsEntryId: entry.id,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.message);
+      }
+
+      renameModalState = "closed";
+      onRename(entry.id, renameValue);
+    } catch (e) {
+      if (e instanceof Error) renameError = e.message;
+      else renameError = "Failed to rename file.";
+      renameModalState = "open";
+    } finally {
+      pageState = "loaded";
+    }
+  };
 </script>
 
 {#if viewType === "grid"}
@@ -78,9 +114,9 @@
       class:border-(--normal-grey)={!selectedFiles.has(entry.id)}
       class:hover:border-(--light-grey)={!selectedFiles.has(entry.id)}
       class:border-white={selectedFiles.has(entry.id)}
-      class:ring-2={selectedFiles.has(entry.id)}
+      class:ring-1={selectedFiles.has(entry.id)}
       class:ring-white={selectedFiles.has(entry.id)}
-      class:focus:ring-2={true}
+      class:focus:ring-1={true}
       class:focus:ring-(--terminal-green)={true}
       class:focus:border-(--terminal-green)={true}
       class:rotate-y-180={isFlipped}
@@ -95,18 +131,14 @@
           e.stopPropagation();
         }}
       >
-        {#if !entry.isDir}
-          <input
-            type="checkbox"
-            tabindex="-1"
-            onclick={(e) => e.stopPropagation()}
-            onchange={() => toggleSelection(entry.id)}
-            checked={selectedFiles.has(entry.id)}
-            class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0
-                 group-hover:opacity-100 group-focus:opacity-100
-                 checked:opacity-100 transition-opacity cursor-pointer"
-          />
-        {/if}
+        <input
+          type="checkbox"
+          tabindex="-1"
+          onclick={(e) => e.stopPropagation()}
+          onchange={() => toggleSelection(entry.id)}
+          checked={selectedFiles.has(entry.id)}
+          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+        />
 
         <div
           class="h-1/2 w-full flex items-center justify-center flex-col overflow-hidden bg-(--darker-grey)"
@@ -118,8 +150,9 @@
           />
           <span
             class="text-(--light-grey) font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
-            >{entry.isDir ? "" : entry.ext}</span
           >
+            {entry.isDir ? "" : entry.ext}
+          </span>
         </div>
 
         <div
@@ -167,7 +200,7 @@
           <button
             class="btn-simple text-sm justify-start!"
             tabindex={isFlipped ? 0 : -1}
-            onclick={() => modal.openSnippet(createRenameModal)}
+            onclick={() => (renameModalState = "open")}
             disabled={pageState === "initLoading" || pageState === "loading"}
           >
             &gt; RENAME
@@ -201,18 +234,14 @@
     class:ring-1={selectedFiles.has(entry.id)}
     class:ring-white={selectedFiles.has(entry.id)}
   >
-    {#if !entry.isDir}
-      <input
-        type="checkbox"
-        tabindex="-1"
-        onclick={(e) => e.stopPropagation()}
-        onchange={() => toggleSelection(entry.id)}
-        checked={selectedFiles.has(entry.id)}
-        class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0
-               group-hover:opacity-100 group-focus:opacity-100
-               checked:opacity-100 transition-opacity cursor-pointer"
-      />
-    {/if}
+    <input
+      type="checkbox"
+      tabindex="-1"
+      onclick={(e) => e.stopPropagation()}
+      onchange={() => toggleSelection(entry.id)}
+      checked={selectedFiles.has(entry.id)}
+      class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+    />
 
     <div class="flex items-center gap-2 shrink-0">
       {#if entry.isDir}
@@ -263,8 +292,8 @@
     <div
       class="flex text-xs text-(--lighter-grey) flex-row justify-between items-center lg:flex-col lg:items-end lg:text-right lg:whitespace-nowrap shrink-0"
     >
-      <span class="uppercase">
-        {entry.isDir ? "Folder" : new Date(entry.modifiedAt).toLocaleString()}
+      <span>
+        {entry.isDir ? "FOLDER" : new Date(entry.modifiedAt).toLocaleString()}
       </span>
       {#if !entry.isDir && entry.size}
         <span>{FileUtil.sizeToReadable(entry.size)}</span>
@@ -275,7 +304,7 @@
       <button
         class="btn-simple btn-square"
         aria-label="Rename"
-        onclick={() => modal.openSnippet(createRenameModal)}
+        onclick={() => (renameModalState = "open")}
         disabled={pageState === "initLoading" ||
           pageState === "loading" ||
           selectedFiles.size > 0}
@@ -295,11 +324,8 @@
   </div>
 {/if}
 
-{#snippet createRenameModal()}
-  <form
-    onsubmit={() => rename(entry.id, entry.name, renameValue, entry.isDir)}
-    class="flex flex-col gap-2"
-  >
+<Modal modalState={renameModalState}>
+  <form onsubmit={rename} class="flex flex-col gap-2">
     <h2 class="text-start">Rename: {entry.name}</h2>
     <!-- svelte-ignore a11y_autofocus -->
     <input
@@ -311,7 +337,7 @@
     <span class="text-xs text-(--clr-error) break-all">{renameError}</span>
     <Button loading={pageState === "loading"} classes="w-full">Rename</Button>
   </form>
-{/snippet}
+</Modal>
 
 <style>
   .preserve-3d {
