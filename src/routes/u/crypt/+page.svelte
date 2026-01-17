@@ -139,9 +139,7 @@
   };
 
   const selectAll = () =>
-    (selectedFiles = new SvelteSet(
-      fsEntries.filter((f) => !f.isDir).map((f) => f.id)
-    ));
+    (selectedFiles = new SvelteSet(fsEntries.map((f) => f.id)));
   const deselectAll = () => (selectedFiles = new SvelteSet());
 
   Uploader.onUploadSuccess = async (task) => {
@@ -199,13 +197,22 @@
   };
 
   const onRename = (fsEntryId: number, newName: string) => {
+    // Find that fsEntry and rename it
     fsEntries = fsEntries.map((f) => {
       if (f.id === fsEntryId) f.name = newName;
       return f;
     });
   };
 
-  const deleteFSEntries = (ids: number[]) => {};
+  const deleteFSEntries = (ids: number[]) => {
+    try {
+      
+    } catch (error) {
+      
+    } finally {
+      pageState = "loaded";
+    }
+  };
 </script>
 
 <svelte:head>
@@ -246,6 +253,10 @@
 {#snippet content(openFileExplorer: () => void)}
   <div id="toolbar" class="w-full flex gap-2 items-stretch">
     {#if isSelectingFiles}
+      <button class="btn-simple btn-square">
+        <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
+      </button>
+      <div class="w-full"></div>
       <button
         class="btn-simple shrink-0"
         onclick={selectAll}
@@ -275,6 +286,7 @@
       >
         <img src="/icons/addFolder.svg" alt="" class="h-6 w-6" />
       </button>
+
       <div class="w-full"></div>
       <button
         class="btn-simple btn-square shrink-0"

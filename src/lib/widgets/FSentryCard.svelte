@@ -299,7 +299,7 @@
         <span>{FileUtil.sizeToReadable(entry.size)}</span>
       {/if}
     </div>
-
+    
     <div class="flex justify-end gap-2 shrink-0">
       <button
         class="btn-simple btn-square"
