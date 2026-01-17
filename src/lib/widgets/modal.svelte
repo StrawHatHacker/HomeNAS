@@ -4,7 +4,7 @@
   import { fade, scale } from "svelte/transition";
 
   let {
-    modalState: modalState,
+    modalState = $bindable(),
     children,
   }: {
     modalState: ModalState;

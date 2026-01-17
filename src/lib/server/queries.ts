@@ -1,13 +1,25 @@
 import { USER_FOLDERS_TYPES, type User, type UserFolderType } from "$lib/types";
 import { db } from "./providers/db";
 
-const getFSEntryByIdQuery = db.prepare(
+const getFSEntriesByIdQuery = db.prepare(
     `SELECT id, name, is_dir
     FROM fs_entries 
-    WHERE id = $id AND user_id = $user_id AND parent_id IS NOT NULL 
-    LIMIT 1`);
-export const getFSEntryById = (id: number, user_id: number) => {
-    return getFSEntryByIdQuery.get({ id, user_id }) as { id: number; name: string, is_dir: number };
+    WHERE user_id = ? 
+    AND parent_id IS NOT NULL
+    AND id IN (SELECT value FROM json_each(?))`
+);
+export const getFSEntriesById = (ids: number[], user_id: number) => {
+    return getFSEntriesByIdQuery.all(user_id, JSON.stringify(ids)) as { id: number; name: string, is_dir: number }[];
+}
+
+const deleteFSEntriesByIdQuery = db.prepare(
+    `DELETE FROM fs_entries 
+    WHERE user_id = ? 
+    AND parent_id IS NOT NULL
+    AND id IN (SELECT value FROM json_each(?))
+    RETURNING name`);
+export const deleteFSEntriesById = (ids: number[], user_id: number) => {
+    return deleteFSEntriesByIdQuery.all(user_id, JSON.stringify(ids)) as { name: string }[];
 }
 
 const createAuthCodeQuery = db.prepare(

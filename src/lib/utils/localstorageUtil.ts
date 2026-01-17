@@ -1,7 +1,7 @@
 export type FSEntryViewMode = 'list' | 'grid';
 
 /**
- * @description Utility class for LocalStorage. Uses getters and setters.
+ * Utility class for LocalStorage. Uses getters and setters.
  * Use when the component is mounted!!!
  * 
  * Not checking if window and localstorage is available interanlly, it's up to YOU to make sure it is available.

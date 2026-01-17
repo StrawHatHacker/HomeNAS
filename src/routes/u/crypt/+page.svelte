@@ -12,29 +12,29 @@
   } from "$lib/utils/localstorageUtil.js";
   import { focusOnMount } from "$lib/utils/ui";
   import Button from "$lib/widgets/button.svelte";
-  import FSentryCard from "$lib/widgets/FSEntryCard.svelte";
   import { onMount } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
   import WrapperHelper from "../wrapperHelper.svelte";
   import Modal from "$lib/widgets/modal.svelte";
+  import FSEntryCard from "$lib/widgets/FSEntryCard.svelte";
+  import { page } from "$app/state";
 
   let { data } = $props();
 
   let createDirValue = $state("");
-  let renameError = $state("");
   let viewType = $state<FSEntryViewMode>(
     LocalStorageUtil.defaultfsEntryViewMode
   );
   let pageState = $state<"initLoading" | "loading" | "loaded">("initLoading");
-  let selectedFiles = $state(new SvelteSet<number>());
+  let selectedFSEntries = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
   let searchValue = $state("");
 
   let createDirModalState = $state<ModalState>("closed");
   let createDirError = $state("");
-
-  let isRenameModalOpen = $state(false);
+  let deleteFSEntriesModalState = $state<ModalState>("closed");
+  let deleteFSEntriesError = $state("");
 
   let lastBreadcrumbEntry = $derived(
     BreadcrumbEntries[BreadcrumbEntries.length - 1]
@@ -42,7 +42,7 @@
   let relativePathToCrypt = $derived(
     BreadcrumbEntries.map((e) => e.name).slice(1) // remove '/crypt'
   );
-  let isSelectingFiles = $derived(selectedFiles.size > 0);
+  let isSelectingFiles = $derived(selectedFSEntries.size > 0);
   let isPageLoading = $derived(
     pageState === "loading" || pageState === "initLoading"
   );
@@ -77,6 +77,7 @@
   const getCurrentDirData = async (initLoading = false) => {
     try {
       pageState = initLoading ? "initLoading" : "loading";
+      selectedFSEntries = new SvelteSet();
 
       const res = await fetch(
         `/api/dir?currentDirId=${lastBreadcrumbEntry.id}`,
@@ -134,13 +135,15 @@
   };
 
   const toggleSelection = (id: number) => {
-    selectedFiles.has(id) ? selectedFiles.delete(id) : selectedFiles.add(id);
-    selectedFiles = selectedFiles;
+    selectedFSEntries.has(id)
+      ? selectedFSEntries.delete(id)
+      : selectedFSEntries.add(id);
+    selectedFSEntries = selectedFSEntries;
   };
 
   const selectAll = () =>
-    (selectedFiles = new SvelteSet(fsEntries.map((f) => f.id)));
-  const deselectAll = () => (selectedFiles = new SvelteSet());
+    (selectedFSEntries = new SvelteSet(fsEntries.map((f) => f.id)));
+  const deselectAll = () => (selectedFSEntries = new SvelteSet());
 
   Uploader.onUploadSuccess = async (task) => {
     const areWeInThisDir = () =>
@@ -204,14 +207,37 @@
     });
   };
 
-  const deleteFSEntries = (ids: number[]) => {
+  const deleteFSEntries = async (fsEntryIds: number[]) => {
     try {
-      
-    } catch (error) {
-      
+      pageState = "loading";
+      deleteFSEntriesModalState = "loading";
+
+      const res = await fetch("/api/fsentries", {
+        method: "DELETE",
+        body: JSON.stringify({
+          fsEntryIds,
+          relativePath: relativePathToCrypt.join("/"),
+          folderType: USER_FOLDERS_TYPES.crypt,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to delete files");
+
+      fsEntries = fsEntries.filter((f) => !fsEntryIds.includes(f.id));
+      deleteFSEntriesModalState = "closed";
+    } catch (e) {
+      if (e instanceof Error) console.error(e);
+      else console.error("Failed to delete files.");
+      deleteFSEntriesModalState = "open";
     } finally {
       pageState = "loaded";
+      selectedFSEntries = new SvelteSet();
     }
+  };
+
+  const onDeleteClick = (fsEntryIds: number[]) => {
+    selectedFSEntries = new SvelteSet(fsEntryIds);
+    deleteFSEntriesModalState = "open";
   };
 </script>
 
@@ -219,7 +245,7 @@
   <title>HomeNAS - Crypt</title>
 </svelte:head>
 
-<Modal modalState={createDirModalState}>
+<Modal bind:modalState={createDirModalState}>
   <form onsubmit={createFolder} class="flex flex-col gap-2">
     <h2 class="text-start">Create Folder</h2>
     <input
@@ -231,6 +257,27 @@
     <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
     <Button loading={pageState === "loading"} classes="w-full">Create</Button>
   </form>
+</Modal>
+
+<Modal bind:modalState={deleteFSEntriesModalState}>
+  <h2>
+    Are you sure you want to permanently delete
+    {selectedFSEntries.size > 1 ? "these" : "this"}
+    file{selectedFSEntries.size > 1 ? "s" : ""}?
+  </h2>
+  {#each selectedFSEntries as slId}
+    {@const sl = fsEntries.find((e) => e.id === slId)}
+    <p class="text-sm text-(--terminal-green)">{sl?.name}</p>
+  {/each}
+  <button
+    class="btn-simple w-full"
+    onclick={() => {
+      deleteFSEntries(Array.from(selectedFSEntries));
+      deleteFSEntriesModalState = "closed";
+    }}
+  >
+    Delete
+  </button>
 </Modal>
 
 {#snippet title()}
@@ -253,7 +300,11 @@
 {#snippet content(openFileExplorer: () => void)}
   <div id="toolbar" class="w-full flex gap-2 items-stretch">
     {#if isSelectingFiles}
-      <button class="btn-simple btn-square">
+      <button
+        class="btn-simple btn-square"
+        onclick={() => (deleteFSEntriesModalState = "open")}
+        disabled={isPageLoading}
+      >
         <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
       </button>
       <div class="w-full"></div>
@@ -340,13 +391,14 @@
           {#if !searchValue || fsEntry.name
               .toLowerCase()
               .includes(searchValue.toLowerCase())}
-            <FSentryCard
+            <FSEntryCard
               entry={fsEntry}
-              {selectedFiles}
+              selectedFiles={selectedFSEntries}
               {toggleSelection}
               {relativePathToCrypt}
               {viewType}
               {onRename}
+              {onDeleteClick}
               bind:pageState
             />
           {/if}

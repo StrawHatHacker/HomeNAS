@@ -20,6 +20,7 @@
     relativePathToCrypt,
     viewType,
     onRename,
+    onDeleteClick,
   }: {
     entry: FSEntries[0];
     selectedFiles: SvelteSet<number>;
@@ -28,6 +29,7 @@
     relativePathToCrypt: string[];
     viewType: FSEntryViewMode;
     onRename: (fsEntryId: number, newName: string) => void;
+    onDeleteClick: (ids: number[]) => void;
   } = $props();
 
   let isFlipped = $state(false);
@@ -210,7 +212,7 @@
             tabindex={isFlipped ? 0 : -1}
             onclick={(e) => {
               e.stopPropagation();
-              console.log("Delete", entry.id);
+              onDeleteClick([entry.id]);
             }}
             disabled={pageState === "initLoading" || pageState === "loading"}
           >
@@ -299,7 +301,7 @@
         <span>{FileUtil.sizeToReadable(entry.size)}</span>
       {/if}
     </div>
-    
+
     <div class="flex justify-end gap-2 shrink-0">
       <button
         class="btn-simple btn-square"
@@ -314,6 +316,10 @@
       <button
         class="btn-simple btn-square"
         aria-label="Delete"
+        onclick={(e) => {
+          e.stopPropagation();
+          onDeleteClick([entry.id]);
+        }}
         disabled={pageState === "initLoading" ||
           pageState === "loading" ||
           selectedFiles.size > 0}
@@ -324,7 +330,7 @@
   </div>
 {/if}
 
-<Modal modalState={renameModalState}>
+<Modal bind:modalState={renameModalState}>
   <form onsubmit={rename} class="flex flex-col gap-2">
     <h2 class="text-start">Rename: {entry.name}</h2>
     <!-- svelte-ignore a11y_autofocus -->

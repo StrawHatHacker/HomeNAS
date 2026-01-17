@@ -72,8 +72,8 @@ export const PUT = async ({ request, getClientAddress, cookies }) => {
     try {
         // TODO transaction
 
-        const fsEntry = Queries.getFSEntryById(fsEntryId, session.user.id);
-        if (!fsEntry) throw new Error('File or directory does not exist.');
+        const foundFSEntries = Queries.getFSEntriesById([fsEntryId], session.user.id);
+        if (!foundFSEntries || foundFSEntries.length === 0) throw new Error('File or directory does not exist.');
 
         const newFSEntryExists = Queries.fsEntryExists(newName, session.user.id, false);
         if (newFSEntryExists) throw new Error('File or directory already exists with that name.');
@@ -105,24 +105,33 @@ const validatePUTBody = (body: any): DataOrErr<{ relativePath: string, folderTyp
 export const DELETE = async ({ request, getClientAddress, cookies }) => {
     Auth.checkRatelimit(request, getClientAddress);
     const session = Auth.verifySession(cookies);
-
+    
     const validatedBody = validateDELETEBody(await request.json());
     if (!validatedBody.ok) return error(400, validatedBody.error);
-    const { relativePath, folderType, fsEntries } = validatedBody.data;
+    const { relativePath, folderType, fsEntryIds } = validatedBody.data;
+
+    try {
+        const deletedFSEntries = Queries.deleteFSEntriesById(fsEntryIds, session.user.id);
+        const deletedNames = deletedFSEntries.map((fse) => fse.name);
+
+        NAS.deleteFSEntries(session.user.rootFolder.name, relativePath, folderType, deletedNames);
+    } catch (e) {
+        if (e instanceof Error) return error(400, e.message);
+        return error(500, "Failed to delete file.");
+    }
 
     return json({});
 }
 
-const validateDELETEBody = (body: any): DataOrErr<{ relativePath: string, folderType: UserFolderType, fsEntries: number[] }, string> => {
-
+const validateDELETEBody = (body: any): DataOrErr<{ relativePath: string, folderType: UserFolderType, fsEntryIds: number[] }, string> => {
     if (!body || typeof body !== 'object') return { ok: false, error: errorMap.goAway };
     if (!('relativePath' in body) || typeof body.relativePath !== 'string') return { ok: false, error: errorMap.goAway };
     if (!('folderType' in body) || !Object.keys(USER_FOLDERS_TYPES).includes(body.folderType)) return { ok: false, error: errorMap.goAway };
-    if (!('fsEntries' in body) || !Array.isArray(body.fsEntries)) return { ok: false, error: errorMap.goAway };
+    if (!('fsEntryIds' in body) || !Array.isArray(body.fsEntryIds)) return { ok: false, error: errorMap.goAway };
 
-    for (const fsEntryId of body.fsEntries) {
+    for (const fsEntryId of body.fsEntryIds) {
         if (Number.isNaN(Number(fsEntryId))) return { ok: false, error: errorMap.goAway };
     }
 
-    return { ok: true, data: { relativePath: body.relativePath, folderType: body.folderType, fsEntries: body.fsEntries } };
+    return { ok: true, data: { relativePath: body.relativePath, folderType: body.folderType, fsEntryIds: body.fsEntryIds } };
 }

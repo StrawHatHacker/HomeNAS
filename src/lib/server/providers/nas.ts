@@ -1,7 +1,7 @@
+import type { UserFolderType } from "$lib/types";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { watchPath } from "./fileWatcher";
-import fs from "node:fs/promises";
-import type { UserFolderType } from "$lib/types";
 
 export class NAS {
     static async createUserFolders(folderName: string) {
@@ -52,23 +52,49 @@ export class NAS {
         const oldPath = path.join(targetDir, oldName);
         const newPath = path.join(targetDir, newName);
 
-        // 1. Verify the source exists
+        // Verify the old file exists
         try {
             await fs.access(oldPath);
         } catch {
             throw new Error(`Item does not exist: ${userFolder}/${folderType}/${relativePath}/${oldName}`);
         }
 
-        // 2. Prevent overwriting an existing file/folder
+        // Prevent overwriting an existing file/folder
         try {
             await fs.access(newPath);
             throw new Error(`The name "${newName}" is already taken in this folder.`);
         } catch (err: any) {
-            // If the error is 'ENOENT', it means the path is available, which is what we want.
+            // If the error is 'ENOENT', it means the path is available, which is what we want
             if (err.code !== 'ENOENT') throw err;
         }
 
-        // 3. Perform the rename (works for both files and directories)
+        // Rename works for both files and directories
         await fs.rename(oldPath, newPath);
+    }
+
+    /**
+     * Delete a list of files or directories under a directory, by name
+     */
+    static async deleteFSEntries(
+        userFolder: UserFolderType,
+        relativePath: string,
+        folderType: UserFolderType,
+        fsEntryNames: string[]
+    ) {
+        const targetDir = path.join(watchPath, userFolder, folderType, relativePath);
+
+        // Verify the directory exists
+        try {
+            await fs.access(targetDir);
+        } catch {
+            throw new Error(`Directory does not exist: ${userFolder}/${folderType}/${relativePath}`);
+        }
+
+        for (const name of fsEntryNames) {
+            const fsEntryPath = path.join(targetDir, name);
+
+            // Recursive to delete directories. Force to not throw if file/dir doesn't exist
+            await fs.rm(fsEntryPath, { recursive: true, force: true });
+        }
     }
 }
