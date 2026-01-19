@@ -48,7 +48,8 @@ h1 {
   font-family: "Hacker", monospace;
   color: var(--terminal-light-green);
 
-  text-shadow: 0 0 5px var(--terminal-green),
+  text-shadow:
+    0 0 5px var(--terminal-green),
     0 0 0.2em var(--terminal-dark-green);
 
   line-height: 100%;
@@ -83,13 +84,13 @@ button:disabled {
   font-size: 0.625rem;
 }
 
-.btn-simple {
+.btn {
   border: 1px solid var(--normal-grey);
-  @apply flex items-center justify-center h-10 px-4;
+  @apply flex items-center justify-center p-2;
   transition: all 0.2s ease-in-out;
 
   &.btn-square {
-    @apply aspect-square p-0;
+    @apply aspect-square;
   }
 
   &:hover {

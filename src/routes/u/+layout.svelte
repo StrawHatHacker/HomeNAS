@@ -58,7 +58,7 @@
 
       <button
         onclick={toggleSidebarCollape}
-        class="hidden md:block hover:bg-(--normal-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) transition-all p-1"
+        class="hidden md:block hover:bg-(--normal-grey) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--terminal-green) transition-all p-1"
         aria-label={$isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <img
@@ -71,7 +71,7 @@
       {#if $isMobileOpen}
         <button
           onclick={toggleMobile}
-          class="md:hidden p-1 hover:bg-(--normal-grey) focus:outline-none focus:ring-2 focus:ring-(--terminal-green) transition-colors"
+          class="md:hidden p-1 hover:bg-(--normal-grey) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--terminal-green) transition-colors"
           aria-label="Close menu"
         >
           <img src="/icons/close.svg" alt="" class="h-6 w-6" />

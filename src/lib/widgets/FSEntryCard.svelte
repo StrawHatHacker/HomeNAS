@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     USER_FOLDERS_TYPES,
+    type BreadCrumbsEntry,
     type FSEntries,
     type ModalState,
   } from "$lib/types";
@@ -21,6 +22,7 @@
     viewType,
     onRename,
     onDeleteClick,
+    nagivateToDir,
   }: {
     entry: FSEntries[0];
     selectedFiles: SvelteSet<number>;
@@ -30,6 +32,7 @@
     viewType: FSEntryViewMode;
     onRename: (fsEntryId: number, newName: string) => void;
     onDeleteClick: (ids: number[]) => void;
+    nagivateToDir: (bcEntry: BreadCrumbsEntry) => void;
   } = $props();
 
   let isFlipped = $state(false);
@@ -66,7 +69,8 @@
     if (selectedFiles.size > 0) isFlipped = false;
   });
 
-  const rename = async () => {
+  const rename = async (e: Event) => {
+    e.preventDefault();
     try {
       if (pageState !== "loaded" || !renameValue.trim()) return;
 
@@ -112,25 +116,30 @@
       id={entry.id.toString()}
       role="button"
       tabindex="0"
-      class="group relative flex flex-col w-full h-full border transition-all duration-500 preserve-3d cursor-pointer focus:outline-none"
+      class="group relative flex flex-col w-full h-full border transition-all duration-500 preserve-3d cursor-pointer focus-visible:outline-none"
       class:border-(--normal-grey)={!selectedFiles.has(entry.id)}
       class:hover:border-(--light-grey)={!selectedFiles.has(entry.id)}
       class:border-white={selectedFiles.has(entry.id)}
       class:ring-1={selectedFiles.has(entry.id)}
       class:ring-white={selectedFiles.has(entry.id)}
-      class:focus:ring-1={true}
-      class:focus:ring-(--terminal-green)={true}
-      class:focus:border-(--terminal-green)={true}
+      class:focus-visible:ring-1={true}
+      class:focus-visible:ring-(--terminal-green)={true}
+      class:focus-visible:border-(--terminal-green)={true}
       class:rotate-y-180={isFlipped}
       oncontextmenu={handleRightClick}
       onkeydown={handleKeyDown}
     >
-      <!-- FRONT -->
+      <!-- FRONT OF GRID CARD -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <div
         class="absolute inset-0 backface-hidden flex flex-col w-full h-full bg-black transform-front"
         onclick={(e) => {
           e.stopPropagation();
+          if (entry.isDir)
+            nagivateToDir({
+              id: entry.id,
+              name: entry.name,
+            });
         }}
       >
         <input
@@ -139,7 +148,7 @@
           onclick={(e) => e.stopPropagation()}
           onchange={() => toggleSelection(entry.id)}
           checked={selectedFiles.has(entry.id)}
-          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
         />
 
         <div
@@ -186,7 +195,7 @@
         </div>
       </div>
 
-      <!-- BACK -->
+      <!-- BACK OF GRID CARD-->
       <div
         class="absolute inset-0 backface-hidden rotate-y-180 bg-black p-4 flex flex-col w-full items-start gap-2 border border-(--normal-grey) transform-back"
       >
@@ -200,7 +209,7 @@
         <div class="flex flex-col gap-2 w-full">
           <span class="text-xs text-(--lighter-grey)">EXECUTE CMD_</span>
           <button
-            class="btn-simple text-sm justify-start!"
+            class="btn text-sm justify-start!"
             tabindex={isFlipped ? 0 : -1}
             onclick={() => (renameModalState = "open")}
             disabled={pageState === "initLoading" || pageState === "loading"}
@@ -208,7 +217,7 @@
             &gt; RENAME
           </button>
           <button
-            class="btn-simple text-sm justify-start!"
+            class="btn text-sm justify-start!"
             tabindex={isFlipped ? 0 : -1}
             onclick={(e) => {
               e.stopPropagation();
@@ -230,11 +239,19 @@
            flex flex-col gap-2
            lg:grid lg:grid-cols-[2rem_minmax(0,1fr)_14rem_6rem] lg:items-center lg:gap-4
            hover:border-(--light-grey) transition-all duration-300
-           focus:ring-1 focus:ring-(--terminal-green) relative"
+           focus-visible:ring-1 focus-visible:ring-(--terminal-green) relative cursor-pointer"
     tabindex="0"
     onkeydown={handleKeyDown}
     class:ring-1={selectedFiles.has(entry.id)}
     class:ring-white={selectedFiles.has(entry.id)}
+    onclick={(e) => {
+      e.preventDefault();
+      if (entry.isDir)
+        nagivateToDir({
+          id: entry.id,
+          name: entry.name,
+        });
+    }}
   >
     <input
       type="checkbox"
@@ -242,7 +259,7 @@
       onclick={(e) => e.stopPropagation()}
       onchange={() => toggleSelection(entry.id)}
       checked={selectedFiles.has(entry.id)}
-      class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+      class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
     />
 
     <div class="flex items-center gap-2 shrink-0">
@@ -304,7 +321,7 @@
 
     <div class="flex justify-end gap-2 shrink-0">
       <button
-        class="btn-simple btn-square"
+        class="btn btn-square"
         aria-label="Rename"
         onclick={() => (renameModalState = "open")}
         disabled={pageState === "initLoading" ||
@@ -314,7 +331,7 @@
         <img src="/icons/edit.svg" alt="" class="h-6 w-6" />
       </button>
       <button
-        class="btn-simple btn-square"
+        class="btn btn-square"
         aria-label="Delete"
         onclick={(e) => {
           e.stopPropagation();

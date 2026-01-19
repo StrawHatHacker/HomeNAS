@@ -15,7 +15,7 @@
 </script>
 
 <button
-  class="btn-simple flex items-center justify-center w-fit {classes}"
+  class="btn flex items-center justify-center w-fit {classes}"
   disabled={loading}
   {onclick}
 >

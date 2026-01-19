@@ -17,15 +17,18 @@
   import WrapperHelper from "../wrapperHelper.svelte";
   import Modal from "$lib/widgets/modal.svelte";
   import FSEntryCard from "$lib/widgets/FSEntryCard.svelte";
-  import { page } from "$app/state";
 
   let { data } = $props();
 
   let createDirValue = $state("");
   let viewType = $state<FSEntryViewMode>(
-    LocalStorageUtil.defaultfsEntryViewMode
+    LocalStorageUtil.defaultfsEntryViewMode,
   );
-  let pageState = $state<"initLoading" | "loading" | "loaded">("initLoading");
+
+  // 'disruptiveLoading' shows "Loading..." and 'loading' just disables the UI
+  let pageState = $state<"disruptiveLoading" | "loading" | "loaded">(
+    "disruptiveLoading",
+  );
   let selectedFSEntries = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
@@ -37,21 +40,21 @@
   let deleteFSEntriesError = $state("");
 
   let lastBreadcrumbEntry = $derived(
-    BreadcrumbEntries[BreadcrumbEntries.length - 1]
+    BreadcrumbEntries[BreadcrumbEntries.length - 1],
   );
   let relativePathToCrypt = $derived(
-    BreadcrumbEntries.map((e) => e.name).slice(1) // remove '/crypt'
+    BreadcrumbEntries.map((e) => e.name).slice(1), // remove '/crypt'
   );
   let isSelectingFiles = $derived(selectedFSEntries.size > 0);
   let isPageLoading = $derived(
-    pageState === "loading" || pageState === "initLoading"
+    pageState === "loading" || pageState === "disruptiveLoading",
   );
 
   onMount(async () => {
     viewType = LocalStorageUtil.fsEntryViewMode;
 
     const cryptData = data.user.rootFolder.subFolders.find(
-      (f) => f.name === USER_FOLDERS_TYPES.crypt
+      (f) => f.name === USER_FOLDERS_TYPES.crypt,
     );
     if (!cryptData) return;
 
@@ -70,20 +73,20 @@
       files,
       relativePathToCrypt,
       lastBreadcrumbEntry.id,
-      USER_FOLDERS_TYPES.crypt
+      USER_FOLDERS_TYPES.crypt,
     );
   };
 
-  const getCurrentDirData = async (initLoading = false) => {
+  const getCurrentDirData = async (disruptiveLoading = false) => {
     try {
-      pageState = initLoading ? "initLoading" : "loading";
+      pageState = disruptiveLoading ? "disruptiveLoading" : "loading";
       selectedFSEntries = new SvelteSet();
 
       const res = await fetch(
         `/api/dir?currentDirId=${lastBreadcrumbEntry.id}`,
         {
           method: "GET",
-        }
+        },
       );
 
       const body = await res.json();
@@ -97,7 +100,8 @@
     }
   };
 
-  const createFolder = async () => {
+  const createFolder = async (e: Event) => {
+    e.preventDefault();
     try {
       if (pageState !== "loaded" || createDirValue === "") return;
       pageState = "loading";
@@ -129,9 +133,16 @@
     }
   };
 
-  const navigateToDirFromBreadcrumb = (index: number) => {
+  const navigateBackFromBreadcrumb = (index: number) => {
     if (index < 0 || index === BreadcrumbEntries.length - 1) return;
+
     BreadcrumbEntries = BreadcrumbEntries.slice(0, index + 1);
+    getCurrentDirData(true);
+  };
+
+  const nagivateToDir = (bcEntry: BreadCrumbsEntry) => {
+    BreadcrumbEntries = [...BreadcrumbEntries, bcEntry];
+    getCurrentDirData(true);
   };
 
   const toggleSelection = (id: number) => {
@@ -157,7 +168,7 @@
         `/api/fsentries/getBy?checksum=${task.checksum}`,
         {
           method: "GET",
-        }
+        },
       );
       let body = (await res.json()) as FSEntries[0];
       if (!res.ok) throw new Error((body as any).message);
@@ -270,7 +281,7 @@
     <p class="text-sm text-(--terminal-green)">{sl?.name}</p>
   {/each}
   <button
-    class="btn-simple w-full"
+    class="btn w-full"
     onclick={() => {
       deleteFSEntries(Array.from(selectedFSEntries));
       deleteFSEntriesModalState = "closed";
@@ -292,7 +303,7 @@
     bind:value={searchValue}
     class="max-w-80"
   />
-  <!-- <button class="btn-simple btn-square">
+  <!-- <button class="btn btn-square">
     <img src="/icons/search.svg" alt="Search" class="h-6 w-6" />
   </button> -->
 {/snippet}
@@ -301,22 +312,18 @@
   <div id="toolbar" class="w-full flex gap-2 items-stretch">
     {#if isSelectingFiles}
       <button
-        class="btn-simple btn-square"
+        class="btn btn-square"
         onclick={() => (deleteFSEntriesModalState = "open")}
         disabled={isPageLoading}
       >
-        <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
+        <img src="/icons/bin.svg" alt="" class="h-8 w-8" />
       </button>
       <div class="w-full"></div>
-      <button
-        class="btn-simple shrink-0"
-        onclick={selectAll}
-        disabled={isPageLoading}
-      >
+      <button class="btn shrink-0" onclick={selectAll} disabled={isPageLoading}>
         Select All
       </button>
       <button
-        class="btn-simple shrink-0"
+        class="btn shrink-0"
         onclick={deselectAll}
         disabled={isPageLoading}
       >
@@ -324,30 +331,30 @@
       </button>
     {:else}
       <button
-        class="btn-simple btn-square shrink-0"
+        class="btn btn-square shrink-0"
         onclick={openFileExplorer}
         disabled={isPageLoading}
       >
-        <img src="/icons/upload.svg" alt="" class="h-6 w-6" />
+        <img src="/icons/upload.svg" alt="" class="h-8 w-8" />
       </button>
       <button
-        class="btn-simple btn-square shrink-0"
+        class="btn btn-square shrink-0"
         disabled={isPageLoading}
         onclick={() => (createDirModalState = "open")}
       >
-        <img src="/icons/addFolder.svg" alt="" class="h-6 w-6" />
+        <img src="/icons/addFolder.svg" alt="" class="h-8 w-8" />
       </button>
 
       <div class="w-full"></div>
       <button
-        class="btn-simple btn-square shrink-0"
+        class="btn btn-square shrink-0"
         onclick={toggleView}
         disabled={isPageLoading}
       >
         <img
           src={viewType === "grid" ? "/icons/grid.svg" : "/icons/list.svg"}
           alt="grid and list switch"
-          class="h-6 w-6"
+          class="h-8 w-8"
         />
       </button>
     {/if}
@@ -361,12 +368,11 @@
       {@const isLast = i === BreadcrumbEntries.length - 1}
       <button
         type="button"
-        class="bg-(--dark-grey) px-1 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-(--terminal-green)"
+        class="bg-(--dark-grey) px-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-(--terminal-green)"
         class:hover:underline={!isLast}
-        class:opacity-80={isLast}
         class:cursor-default!={isLast}
         class:focus-visible:ring-0={isLast}
-        onclick={() => !isLast && navigateToDirFromBreadcrumb(i)}
+        onclick={() => !isLast && navigateBackFromBreadcrumb(i)}
         aria-current={isLast ? "page" : undefined}
         tabindex={isLast ? -1 : 0}
       >
@@ -379,7 +385,7 @@
     {/each}
   </div>
   <div id="dir-contents-container">
-    {#if pageState === "initLoading"}
+    {#if pageState === "disruptiveLoading"}
       <div class="text-md text-(--lighter-grey) text-center">Loading...</div>
     {:else if fsEntries}
       <div
@@ -399,6 +405,7 @@
               {viewType}
               {onRename}
               {onDeleteClick}
+              {nagivateToDir}
               bind:pageState
             />
           {/if}
