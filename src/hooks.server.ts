@@ -38,6 +38,13 @@ export const initDB = async () => {
             `).run();
 
         db.prepare(
+            `CREATE TABLE IF NOT EXISTS tags (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                color TEXT NOT NULL)
+            `).run();
+
+        db.prepare(
             `CREATE TABLE IF NOT EXISTS fs_entries (
                 id INTEGER PRIMARY KEY,
                 parent_id INTEGER,
@@ -49,17 +56,19 @@ export const initDB = async () => {
                 size INTEGER,                -- NULL for directories
                 mime_type TEXT,              -- NULL for directories
                 checksum TEXT,               -- for sync / dedup
+                tag INTEGER,                    
                 modified_at INTEGER NOT NULL,
                 created_at INTEGER NOT NULL ,
 
                 FOREIGN KEY (parent_id) REFERENCES fs_entries(id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE SET NULL,
 
                 UNIQUE (parent_id, name)
             )`).run();
 
-        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS ui_fs_entries_path ON fs_entries (parent_id, name) WHERE parent_id IS NOT NULL;`).run();
-        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS ui_fs_entries_root_path ON fs_entries (name) WHERE parent_id IS NULL;`).run();
+        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS ui_fs_entries_path ON fs_entries (parent_id, name) WHERE parent_id IS NOT NULL`).run();
+        db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS ui_fs_entries_root_path ON fs_entries (name) WHERE parent_id IS NULL`).run();
 
         // TODO we will see about these indexes
         db.prepare(`CREATE INDEX IF NOT EXISTS idx_fs_parent ON fs_entries(parent_id);`).run();
