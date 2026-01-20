@@ -64,11 +64,16 @@
 </svelte:head>
 
 <Matrix />
+<div class="bg-black" style="z-index: -2; position: fixed; inset: 0"></div>
 
 <main
   class="flex flex-col items-center justify-center gap-10 h-screen w-fit mx-auto text-(--terminal-green)"
 >
-  <h1 class="text-center flex tracking-tighter">home n.a.s.</h1>
+  <h1
+    class="text-center flex tracking-tighter"
+  >
+    home n.a.s.
+  </h1>
 
   <div id="terminal" class="mx-6">
     <p class="text-sm lg:text-md mono">
