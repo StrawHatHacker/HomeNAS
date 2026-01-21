@@ -11,7 +11,6 @@
     type FSEntryViewMode,
   } from "$lib/utils/localstorageUtil.js";
   import { focusOnMount } from "$lib/utils/ui";
-  import Button from "$lib/widgets/button.svelte";
   import { onMount } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
   import WrapperHelper from "../wrapperHelper.svelte";
@@ -266,7 +265,7 @@
       use:focusOnMount
     />
     <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
-    <Button loading={pageState === "loading"} classes="w-full">Create</Button>
+    <!-- <Button loading={pageState === "loading"} classes="w-full">Create</Button> -->
   </form>
 </Modal>
 

@@ -9,7 +9,6 @@
   import type { FSEntryViewMode } from "$lib/utils/localstorageUtil";
   import { focusOnMount } from "$lib/utils/ui";
   import type { SvelteSet } from "svelte/reactivity";
-  import Button from "./button.svelte";
   import { onMount } from "svelte";
   import Modal from "./modal.svelte";
 
@@ -358,7 +357,7 @@
       use:focusOnMount
     />
     <span class="text-xs text-(--clr-error) break-all">{renameError}</span>
-    <Button loading={pageState === "loading"} classes="w-full">Rename</Button>
+    <!-- <Button loading={pageState === "loading"} classes="w-full">Rename</Button> -->
   </form>
 </Modal>
 
