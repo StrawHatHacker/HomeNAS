@@ -3,6 +3,7 @@
   import { onMount, type Snippet } from "svelte";
   import SunIcon from "@lucide/svelte/icons/sun";
   import MoonIcon from "@lucide/svelte/icons/moon";
+  import { Input } from "$lib/components/ui/input/index.js";
 
   import { toggleMode } from "mode-watcher";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -68,9 +69,7 @@
 </script>
 
 <main class="flex-1 overflow-y-hidden">
-  <div
-    class="h-18 border-b border-(--normal-grey) px-4 flex items-center gap-2"
-  >
+  <div class="h-18 border-b border-border px-4 flex items-center gap-2">
     <button
       onclick={toggleMobile}
       class="md:hidden p-2 hover:bg-(--normal-grey) rounded-md"
@@ -82,15 +81,6 @@
     </div>
     <form class="[&>input]:ml-auto flex-1 flex gap-2">
       {@render search()}
-      <Button onclick={toggleMode} variant="outline" size="icon">
-        <SunIcon
-          class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all! dark:scale-0 dark:-rotate-90"
-        />
-        <MoonIcon
-          class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all! dark:scale-100 dark:rotate-0"
-        />
-        <span class="sr-only">Toggle theme</span>
-      </Button>
     </form>
   </div>
   <div

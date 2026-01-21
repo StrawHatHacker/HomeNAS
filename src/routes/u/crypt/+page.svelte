@@ -16,6 +16,10 @@
   import WrapperHelper from "../wrapperHelper.svelte";
   import Modal from "$lib/widgets/modal.svelte";
   import FSEntryCard from "$lib/widgets/FSEntryCard.svelte";
+  import { Input } from "$lib/components/ui/input/index.js";
+  import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import { StringUtil } from "$lib/utils/stringUtil.js";
 
   let { data } = $props();
 
@@ -291,20 +295,18 @@
 </Modal>
 
 {#snippet title()}
-  <p>Crypt</p>
-  <span class="text-xs text-(--lighter-grey)">Your unencrypted files</span>
+  <h2 class="font-medium">{StringUtil.capitalizeFirst(USER_FOLDERS_TYPES.crypt)}</h2>
+  <span class="text-xs text-muted-foreground">Your unencrypted files</span>
 {/snippet}
 
 {#snippet search()}
-  <input
+  <Input
     type="text"
-    placeholder="Search"
+    placeholder="Search files"
     bind:value={searchValue}
-    class="max-w-80"
+    disabled={isPageLoading}
+    class="max-w-60"
   />
-  <!-- <button class="btn btn-square">
-    <img src="/icons/search.svg" alt="Search" class="h-6 w-6" />
-  </button> -->
 {/snippet}
 
 {#snippet content(openFileExplorer: () => void)}
@@ -329,33 +331,39 @@
         Deselect All
       </button>
     {:else}
-      <button
-        class="btn btn-square shrink-0"
-        onclick={openFileExplorer}
-        disabled={isPageLoading}
-      >
-        <img src="/icons/upload.svg" alt="" class="h-8 w-8" />
-      </button>
-      <button
-        class="btn btn-square shrink-0"
-        disabled={isPageLoading}
-        onclick={() => (createDirModalState = "open")}
-      >
-        <img src="/icons/addFolder.svg" alt="" class="h-8 w-8" />
-      </button>
-
+      <ButtonGroup.Root>
+        <Button
+          onclick={openFileExplorer}
+          disabled={isPageLoading}
+          variant="outline"
+          size="icon-lg"
+        >
+          <img src="/icons/upload.svg" alt="" class="h-6 w-6" />
+        </Button>
+        <Button
+          onclick={() => (createDirModalState = "open")}
+          disabled={isPageLoading}
+          variant="outline"
+          size="icon-lg"
+        >
+          <img src="/icons/addFolder.svg" alt="" class="h-6 w-6" />
+        </Button>
+      </ButtonGroup.Root>
       <div class="w-full"></div>
-      <button
-        class="btn btn-square shrink-0"
-        onclick={toggleView}
-        disabled={isPageLoading}
-      >
-        <img
-          src={viewType === "grid" ? "/icons/grid.svg" : "/icons/list.svg"}
-          alt="grid and list switch"
-          class="h-8 w-8"
-        />
-      </button>
+      <ButtonGroup.Root>
+        <Button
+          onclick={toggleView}
+          disabled={isPageLoading}
+          variant="outline"
+          size="icon-lg"
+        >
+          <img
+            src={viewType === "grid" ? "/icons/grid.svg" : "/icons/list.svg"}
+            alt="grid and list switch"
+            class="h-6 w-6"
+          />
+        </Button>
+      </ButtonGroup.Root>
     {/if}
   </div>
 
@@ -367,19 +375,21 @@
       {@const isLast = i === BreadcrumbEntries.length - 1}
       <button
         type="button"
-        class="bg-(--dark-grey) px-1 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-(--terminal-green)"
+        class="px-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:border-ring focus-visible:ring-ring/50 rounded-sm text-muted-foreground cursor-pointer transition-all"
         class:hover:underline={!isLast}
+        class:hover:text-primary={!isLast}
         class:cursor-default!={isLast}
         class:focus-visible:ring-0={isLast}
+        class:text-primary={isLast}
         onclick={() => !isLast && navigateBackFromBreadcrumb(i)}
         aria-current={isLast ? "page" : undefined}
         tabindex={isLast ? -1 : 0}
       >
-        {entry.name}
+        {i === 0 ?StringUtil.capitalizeFirst(entry.name) : entry.name}
       </button>
 
       {#if !isLast}
-        <span class="cursor-default select-none" aria-hidden="true">&gt;</span>
+        <span class="cursor-default select-none text-muted-foreground" aria-hidden="true">&gt;</span>
       {/if}
     {/each}
   </div>

@@ -24,7 +24,6 @@ export type User = NonNullable<ReturnType<typeof getSession>>['user'];
 
 export const USER_FOLDERS_TYPES = {
     crypt: 'crypt',
-    encrypted: 'encrypted',
 } as const;
 
 export type UserFolderType = keyof typeof USER_FOLDERS_TYPES;

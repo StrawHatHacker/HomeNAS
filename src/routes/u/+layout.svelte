@@ -1,14 +1,18 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { ROUTES } from "$lib/types.js";
+  import { ROUTES, USER_FOLDERS_TYPES } from "$lib/types.js";
+  import type { Component } from "svelte";
   import { isSidebarCollapsed, isMobileOpen } from "$lib/stores/sidebar";
   import UploadingProgress from "$lib/widgets/uploadingProgress.svelte";
-  import Button from "$lib/components/ui/button/button.svelte";
-  import Expand from "$lib/widgets/icons/expand.svelte";
-  import Collapse from "$lib/widgets/icons/collapse.svelte";
-  import File from "$lib/widgets/icons/file.svelte";
-  import type { Component } from "svelte";
-  import Options from "$lib/widgets/icons/options.svelte";
+  import Button, { buttonVariants } from "$lib/components/ui/button/button.svelte";
+  import ExpandIcon from "$lib/widgets/icons/expandIcon.svelte";
+  import CollapseIcon from "$lib/widgets/icons/collapseIcon.svelte";
+  import FileIcon from "$lib/widgets/icons/fileIcon.svelte";
+  import OptionsIcon from "$lib/widgets/icons/optionsIcon.svelte";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+  import CloseIcon from "$lib/widgets/icons/closeIcon.svelte";
+  import { setMode } from "mode-watcher";
+  import { StringUtil } from "$lib/utils/stringUtil.js";
 
   let { data, children } = $props();
 
@@ -17,11 +21,12 @@
   }> = {
     files: [
       {
-        name: "Crypt",
-        icon: File,
+        name: StringUtil.capitalizeFirst(USER_FOLDERS_TYPES.crypt),
+        icon: FileIcon,
         href: ROUTES.crypt,
       },
     ],
+  
   };
 
   const toggleSidebarCollape = () =>
@@ -62,20 +67,22 @@
         aria-label={$isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {#if $isSidebarCollapsed}
-          <Expand />
+          <ExpandIcon />
         {:else}
-          <Collapse />
+          <CollapseIcon />
         {/if}
       </Button>
 
       {#if $isMobileOpen}
-        <button
+        <Button
+          variant="outline"
+          size="icon-lg"
           onclick={toggleMobile}
-          class="md:hidden p-1 hover:bg-(--normal-grey) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--terminal-green) transition-colors"
+          class="md:hidden"
           aria-label="Close menu"
         >
-          <img src="/icons/close.svg" alt="" class="h-6 w-6" />
-        </button>
+          <CloseIcon class="size-6" />
+        </Button>
       {/if}
     </header>
 
@@ -96,7 +103,9 @@
               <Button
                 class="w-full {$isSidebarCollapsed && !$isMobileOpen
                   ? 'justify-center'
-                  : 'justify-start'}"
+                  : 'justify-start'} {isActive(item.href)
+                  ? 'bg-secondary'
+                  : ''}"
                 href={item.href}
                 variant="ghost"
                 size="sm"
@@ -115,33 +124,61 @@
         {/each}
       </div>
 
-      <Button
-        variant="ghost"
-        class="flex h-12 w-full p-2 items-center {$isSidebarCollapsed &&
-        !$isMobileOpen
-          ? 'justify-center'
-          : 'justify-start gap-2'}"
-      >
-        <div class="rounded-full bg-primary-foreground h-8 w-8 grid items-center">
-          {data.user.name.slice(0, 1)}
-        </div>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <div
+            class="flex h-12 w-full p-2 items-center {$isSidebarCollapsed &&
+            !$isMobileOpen
+              ? 'justify-center'
+              : 'justify-start gap-2'} {buttonVariants.base} {buttonVariants.variants.variant.ghost}"
+          >
+            <div
+              class="rounded-full bg-primary-foreground h-8 w-8 grid items-center"
+            >
+              {data.user.name.slice(0, 1)}
+            </div>
 
-        {#if !$isSidebarCollapsed || $isMobileOpen}
-          <div class="flex-1 flex flex-col min-w-0 text-left">
-            <span
-              class="truncate text-sm font-medium leading-none text-foreground"
-            >
-              {data.user.name}
-            </span>
-            <span
-              class="truncate text-xs font-normal text-muted-foreground mt-1"
-            >
-              {data.user.email}
-            </span>
+            {#if !$isSidebarCollapsed || $isMobileOpen}
+              <div class="flex-1 flex flex-col min-w-0 text-left">
+                <span
+                  class="truncate text-sm font-medium leading-none text-foreground"
+                >
+                  {data.user.name}
+                </span>
+                <span
+                  class="truncate text-xs font-normal text-muted-foreground mt-1"
+                >
+                  {data.user.email}
+                </span>
+              </div>
+              <OptionsIcon class="size-4 shrink-0" />
+            {/if}
           </div>
-          <Options class="size-4 shrink-0" />
-        {/if}
-      </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content class="w-56" align="end">
+          <DropdownMenu.Label>My Account</DropdownMenu.Label>
+          <DropdownMenu.Group>
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>Theme</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item onclick={() => setMode("light")}>
+                  Light
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onclick={() => setMode("dark")}>
+                  Dark
+                </DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+          </DropdownMenu.Group>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Group>
+            <DropdownMenu.Item>Settings</DropdownMenu.Item>
+            <DropdownMenu.Item class="text-destructive"
+              >Logout</DropdownMenu.Item
+            >
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
     </nav>
   </aside>
   {@render children()}

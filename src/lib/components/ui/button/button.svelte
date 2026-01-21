@@ -19,7 +19,7 @@
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs",
         ghost:
-          "hover:bg-red hover:text-accent-foreground dark:hover:bg-accent/50",
+          "bg-linear-to-l from-transparent hover:to-accent hover:text-accent-foreground dark:hover:to-accent",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
