@@ -11,6 +11,8 @@
   import type { SvelteSet } from "svelte/reactivity";
   import { onMount } from "svelte";
   import Modal from "./modal.svelte";
+  import * as Card from "$lib/components/ui/card/index.js";
+  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
 
   let {
     entry,
@@ -38,6 +40,8 @@
   let renameValue = $state("");
   let renameModalState = $state<ModalState>("closed");
   let renameError = $state("");
+
+  let isSelected = $derived(selectedFiles.has(entry.id));
 
   onMount(() => {
     renameValue = entry.name;
@@ -106,130 +110,85 @@
 </script>
 
 {#if viewType === "grid"}
-  <div
-    class="perspective-distant w-full h-60"
-    class:opacity-50={pageState === "initLoading" || pageState === "loading"}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <Card.Root
+    id={entry.id.toString()}
+    role="button"
+    class="h-56 cursor-pointer relative p-0 overflow-clip group"
+    oncontextmenu={handleRightClick}
+    onkeydown={handleKeyDown}
+    onclick={(e) => {
+      e.stopPropagation();
+      if (entry.isDir)
+        nagivateToDir({
+          id: entry.id,
+          name: entry.name,
+        });
+    }}
   >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      id={entry.id.toString()}
-      role="button"
-      tabindex="0"
-      class="group relative flex flex-col w-full h-full border transition-all duration-500 preserve-3d cursor-pointer focus-visible:outline-none"
-      class:border-(--normal-grey)={!selectedFiles.has(entry.id)}
-      class:hover:border-(--light-grey)={!selectedFiles.has(entry.id)}
-      class:border-white={selectedFiles.has(entry.id)}
-      class:ring-1={selectedFiles.has(entry.id)}
-      class:ring-white={selectedFiles.has(entry.id)}
-      class:focus-visible:ring-1={true}
-      class:focus-visible:ring-(--terminal-green)={true}
-      class:focus-visible:border-(--terminal-green)={true}
-      class:rotate-y-180={isFlipped}
-      oncontextmenu={handleRightClick}
-      onkeydown={handleKeyDown}
-    >
-      <!-- FRONT OF GRID CARD -->
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <Checkbox
+      onclick={(e) => e.stopPropagation()}
+      onchange={(e) => {
+      console.log(1);
+      
+        toggleSelection(entry.id);
+      }}
+      bind:checked={isSelected}
+      class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+    />
+
+    <Card.Content class="flex flex-col h-full p-3 ">
+      <!-- Icon Section (Top Half) -->
       <div
-        class="absolute inset-0 backface-hidden flex flex-col w-full h-full bg-black transform-front"
-        onclick={(e) => {
-          e.stopPropagation();
-          if (entry.isDir)
-            nagivateToDir({
-              id: entry.id,
-              name: entry.name,
-            });
-        }}
+        class="h-9/20 w-full flex items-center justify-center flex-col gap-2"
       >
-        <input
-          type="checkbox"
-          tabindex="-1"
-          onclick={(e) => e.stopPropagation()}
-          onchange={() => toggleSelection(entry.id)}
-          checked={selectedFiles.has(entry.id)}
-          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
+        <img
+          src={entry.isDir ? "/icons/folder.svg" : "/icons/fileOutlined.svg"}
+          alt=""
+          class="h-12 w-12 transition-all duration-300 opacity-50 group-hover:opacity-80"
         />
-
-        <div
-          class="h-1/2 w-full flex items-center justify-center flex-col overflow-hidden bg-(--darker-grey)"
+        <!-- TODO show proper file icon PDF for pdf, img icons for images etc -->
+        <!-- {#if !entry.isDir && entry.ext}
+        <span
+          class="text-muted-foreground font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
         >
-          <img
-            src={entry.isDir ? "/icons/folder.svg" : "/icons/fileOutlined.svg"}
-            alt=""
-            class="h-16 w-16 transition-all duration-300 opacity-50 group-hover:opacity-80"
-          />
-          <span
-            class="text-(--light-grey) font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
-          >
-            {entry.isDir ? "" : entry.ext}
-          </span>
-        </div>
+          {entry.ext}
+        </span>
+      {/if} -->
+      </div>
 
-        <div
-          class="flex flex-col justify-between p-2 h-1/2 border-t border-(--normal-grey) bg-black overflow-hidden"
+      <div class="flex flex-col justify-between h-11/20 gap-1">
+        <p
+          class="text-sm line-clamp-3 break-all"
+          class:text-xs={entry.name.length > 30}
         >
-          <p class="text-sm text-(--terminal-green) line-clamp-2 break-all">
-            {entry.name}
-          </p>
+          {entry.name}
+        </p>
 
-          <div
-            class="flex text-xs flex-col justify-between items-center mt-auto text-(--lighter-grey)"
-          >
-            {#if !entry.isDir && entry.mimeType}
-              <span
-                class="text-xs text-(--lighter-grey) line-clamp-2 break-all"
-              >
-                {entry.mimeType}
-              </span>
-            {/if}
-            <span class="uppercase">
-              {entry.isDir
-                ? "Folder"
-                : new Date(entry.modifiedAt).toLocaleString()}
+        <div class="flex flex-col gap-1 text-xs">
+          {#if !entry.isDir && entry.mimeType}
+            <span class="line-clamp-1 break-all text-muted-foreground">
+              {entry.mimeType}
             </span>
+          {/if}
+
+          <div class="flex justify-between items-center">
+            <span class="text-xs">
+              {entry.isDir
+                ? "FOLDER"
+                : new Date(entry.modifiedAt).toLocaleDateString()}
+            </span>
+
             {#if !entry.isDir && entry.size}
-              <span>{FileUtil.sizeToReadable(entry.size)}</span>
+              <span>
+                {FileUtil.sizeToReadable(entry.size)}
+              </span>
             {/if}
           </div>
         </div>
       </div>
-
-      <!-- BACK OF GRID CARD-->
-      <div
-        class="absolute inset-0 backface-hidden rotate-y-180 bg-black p-4 flex flex-col w-full items-start gap-2 border border-(--normal-grey) transform-back"
-      >
-        <p
-          class="text-(--terminal-green) text-xs line-clamp-2 break-all w-full"
-        >
-          {entry.isDir ? "FOLDER " : ""}
-          {entry.name}
-        </p>
-
-        <div class="flex flex-col gap-2 w-full">
-          <span class="text-xs text-(--lighter-grey)">EXECUTE CMD_</span>
-          <button
-            class="btn text-sm justify-start!"
-            tabindex={isFlipped ? 0 : -1}
-            onclick={() => (renameModalState = "open")}
-            disabled={pageState === "initLoading" || pageState === "loading"}
-          >
-            &gt; RENAME
-          </button>
-          <button
-            class="btn text-sm justify-start!"
-            tabindex={isFlipped ? 0 : -1}
-            onclick={(e) => {
-              e.stopPropagation();
-              onDeleteClick([entry.id]);
-            }}
-            disabled={pageState === "initLoading" || pageState === "loading"}
-          >
-            &gt; DELETE
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+    </Card.Content>
+  </Card.Root>
 {:else if viewType === "list"}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -241,8 +200,6 @@
            focus-visible:ring-1 focus-visible:ring-(--terminal-green) relative cursor-pointer"
     tabindex="0"
     onkeydown={handleKeyDown}
-    class:ring-1={selectedFiles.has(entry.id)}
-    class:ring-white={selectedFiles.has(entry.id)}
     onclick={(e) => {
       e.preventDefault();
       if (entry.isDir)
@@ -360,29 +317,3 @@
     <!-- <Button loading={pageState === "loading"} classes="w-full">Rename</Button> -->
   </form>
 </Modal>
-
-<style>
-  .preserve-3d {
-    transform-style: preserve-3d;
-    position: relative;
-  }
-  .backface-hidden {
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    /* Essential for Safari/Chrome to keep the layers distinct */
-    position: absolute;
-    width: 100%;
-    height: 100%;
-  }
-  .rotate-y-180 {
-    transform: rotateY(180deg);
-  }
-
-  /* Separate the planes so the front doesn't block the back */
-  .transform-front {
-    transform: translateZ(1px);
-  }
-  .transform-back {
-    transform: rotateY(180deg) translateZ(1px);
-  }
-</style>

@@ -295,7 +295,9 @@
 </Modal>
 
 {#snippet title()}
-  <h2 class="font-medium">{StringUtil.capitalizeFirst(USER_FOLDERS_TYPES.crypt)}</h2>
+  <h2 class="font-medium">
+    {StringUtil.capitalizeFirst(USER_FOLDERS_TYPES.crypt)}
+  </h2>
   <span class="text-xs text-muted-foreground">Your unencrypted files</span>
 {/snippet}
 
@@ -312,24 +314,36 @@
 {#snippet content(openFileExplorer: () => void)}
   <div id="toolbar" class="w-full flex gap-2 items-stretch">
     {#if isSelectingFiles}
-      <button
-        class="btn btn-square"
-        onclick={() => (deleteFSEntriesModalState = "open")}
-        disabled={isPageLoading}
-      >
-        <img src="/icons/bin.svg" alt="" class="h-8 w-8" />
-      </button>
+      <ButtonGroup.Root>
+        <Button
+          variant="outline"
+          size="icon-lg"
+          onclick={() => (deleteFSEntriesModalState = "open")}
+          disabled={isPageLoading}
+        >
+        <!-- TODO change the icons to .svelte -->
+          <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
+        </Button>
+      </ButtonGroup.Root>
       <div class="w-full"></div>
-      <button class="btn shrink-0" onclick={selectAll} disabled={isPageLoading}>
-        Select All
-      </button>
-      <button
-        class="btn shrink-0"
-        onclick={deselectAll}
-        disabled={isPageLoading}
-      >
-        Deselect All
-      </button>
+      <ButtonGroup.Root>
+        <Button
+          variant="outline"
+          size="lg"
+          onclick={selectAll}
+          disabled={isPageLoading}
+        >
+          Select All
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          onclick={deselectAll}
+          disabled={isPageLoading}
+        >
+          Deselect All
+        </Button>
+      </ButtonGroup.Root>
     {:else}
       <ButtonGroup.Root>
         <Button
@@ -385,11 +399,14 @@
         aria-current={isLast ? "page" : undefined}
         tabindex={isLast ? -1 : 0}
       >
-        {i === 0 ?StringUtil.capitalizeFirst(entry.name) : entry.name}
+        {i === 0 ? StringUtil.capitalizeFirst(entry.name) : entry.name}
       </button>
 
       {#if !isLast}
-        <span class="cursor-default select-none text-muted-foreground" aria-hidden="true">&gt;</span>
+        <span
+          class="cursor-default select-none text-muted-foreground"
+          aria-hidden="true">&gt;</span
+        >
       {/if}
     {/each}
   </div>
