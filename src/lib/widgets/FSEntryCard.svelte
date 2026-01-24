@@ -58,19 +58,16 @@
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      // If flipped, we don't select, we just let user interact with back buttons
-      // If not flipped, we toggle selection
       if (!isFlipped && !entry.isDir) toggleSelection(entry.id);
+      if (entry.isDir) nagivateToDir({ id: entry.id, name: entry.name });
     }
 
-    // Allow flipping via keyboard (e.g., 'f' key or Ctrl+Enter)
     if (e.key === "f" && selectedFiles.size === 0) {
       isFlipped = !isFlipped;
     }
   }
 
   $effect(() => {
-    // Flip all the cards to the front if the user selects a card
     if (selectedFiles.size > 0) isFlipped = false;
   });
 
@@ -111,13 +108,17 @@
   };
 </script>
 
-{#if viewType === "grid"}
-  <ContextMenu.Root>
-    <ContextMenu.Trigger>
+<ContextMenu.Root>
+  <ContextMenu.Trigger>
+    {#if viewType === "grid"}
       <Card.Root
         id={entry.id.toString()}
         role="button"
-        class="h-56 cursor-pointer relative p-0 group"
+        tabindex={0}
+        class="group relative h-56 cursor-pointer p-0 transition-all 
+               outline-none ring-offset-background
+               focus-visible:ring-2 focus-visible:ring-ring
+               {isSelected ? 'ring-2 ring-primary ' : 'border-transparent'}"
         onkeydown={handleKeyDown}
         onclick={() => {
           if (entry.isDir)
@@ -131,37 +132,28 @@
           onclick={(e) => e.stopPropagation()}
           onchange={() => toggleSelection(entry.id)}
           bind:checked={isSelected}
-          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer
+          class="absolute left-2 top-2 z-10 h-5 w-5 cursor-pointer opacity-50 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 checked:opacity-100
           {isSelected ? 'opacity-100' : ''}"
         />
 
-        <Card.Content class="flex flex-col h-full p-3">
+        <Card.Content class="flex h-full flex-col p-3">
           <div
-            class="h-9/20 w-full flex items-center justify-center flex-col gap-2"
+            class="h-9/20 flex w-full flex-col items-center justify-center gap-2"
           >
             {#if entry.isDir}
               <FolderOutlineIcon
-                class="h-12 w-12 transition-all duration-300 opacity-50 group-hover:opacity-80"
+                class="h-12 w-12 opacity-50 transition-all duration-200 group-hover:opacity-80"
               />
             {:else}
               <FileOutlineIcon
-                class="h-12 w-12 transition-all duration-300 opacity-50 group-hover:opacity-80"
+                class="h-12 w-12 opacity-50 transition-all duration-200 group-hover:opacity-80"
               />
             {/if}
-
-            <!-- TODO show proper file icon PDF for pdf, img icons for images etc -->
-            <!-- {#if !entry.isDir && entry.ext}
-            <span
-              class="text-muted-foreground font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
-            >
-              {entry.ext}
-            </span>
-          {/if} -->
           </div>
 
-          <div class="flex flex-col justify-between h-11/20 gap-1">
+          <div class="h-11/20 flex flex-col justify-between gap-1">
             <p
-              class="text-sm line-clamp-3 break-all"
+              class="line-clamp-3 break-all text-sm font-medium"
               class:text-xs={entry.name.length > 30}
             >
               {entry.name}
@@ -174,7 +166,7 @@
                 </span>
               {/if}
 
-              <div class="flex justify-between items-center">
+              <div class="flex items-center justify-between">
                 <span class="text-xs">
                   {entry.isDir
                     ? "FOLDER"
@@ -191,133 +183,96 @@
           </div>
         </Card.Content>
       </Card.Root>
-    </ContextMenu.Trigger>
-    <ContextMenu.Content class="w-52">
-      <ContextMenu.Label class="text-sm truncate">
-        {entry.name}
-      </ContextMenu.Label>
-      <ContextMenu.Separator />
-      <ContextMenu.Item>View</ContextMenu.Item>
-      <ContextMenu.Item onclick={() => (renameModalState = "open")}>
-        Rename
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        variant="destructive"
-        onclick={() => onDeleteClick([entry.id])}
-      >
-        Delete
-      </ContextMenu.Item>
-    </ContextMenu.Content>
-  </ContextMenu.Root>
-{:else if viewType === "list"}
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="group border border-(--normal-grey) p-2
-           flex flex-col gap-2
-           lg:grid lg:grid-cols-[2rem_minmax(0,1fr)_14rem_6rem] lg:items-center lg:gap-4
-           hover:border-(--light-grey) transition-all duration-300
-           focus-visible:ring-1 focus-visible:ring-(--terminal-green) relative cursor-pointer"
-    tabindex="0"
-    onkeydown={handleKeyDown}
-    onclick={(e) => {
-      e.preventDefault();
-      if (entry.isDir)
-        nagivateToDir({
-          id: entry.id,
-          name: entry.name,
-        });
-    }}
-  >
-    <input
-      type="checkbox"
-      tabindex="-1"
-      onclick={(e) => e.stopPropagation()}
-      onchange={() => toggleSelection(entry.id)}
-      checked={selectedFiles.has(entry.id)}
-      class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
-    />
-
-    <div class="flex items-center gap-2 shrink-0">
-      {#if entry.isDir}
-        <img
-          src="/icons/folder.svg"
-          alt="Folder"
-          class="h-8 w-8 transition-transform duration-300 group-hover:scale-110"
-        />
-      {:else}
-        <img
-          src="/icons/file.svg"
-          alt="File"
-          class="h-8 w-8 transition-transform duration-300 group-hover:scale-110"
-        />
-      {/if}
-
-      <div class="lg:hidden min-w-0">
-        <span
-          class="block text-sm text-(--terminal-green) line-clamp-2 break-all"
-        >
-          {entry.name}
-        </span>
-        {#if !entry.isDir && entry.mimeType}
-          <span
-            class="block text-xs text-(--lighter-grey) line-clamp-2 break-all"
-          >
-            {entry.mimeType}
-          </span>
-        {/if}
-      </div>
-    </div>
-
-    <div class="hidden lg:block min-w-0">
-      <span
-        class="block text-sm text-(--terminal-green) line-clamp-2 break-all"
-      >
-        {entry.name}
-      </span>
-      {#if !entry.isDir && entry.mimeType}
-        <span
-          class="block text-xs text-(--lighter-grey) line-clamp-2 break-all"
-        >
-          {entry.mimeType}
-        </span>
-      {/if}
-    </div>
-
-    <div
-      class="flex text-xs text-(--lighter-grey) flex-row justify-between items-center lg:flex-col lg:items-end lg:text-right lg:whitespace-nowrap shrink-0"
-    >
-      <span>
-        {entry.isDir ? "FOLDER" : new Date(entry.modifiedAt).toLocaleString()}
-      </span>
-      {#if !entry.isDir && entry.size}
-        <span>{FileUtil.sizeToReadable(entry.size)}</span>
-      {/if}
-    </div>
-
-    <div class="flex justify-end gap-2 shrink-0">
-      <button
-        class="btn btn-square"
-        aria-label="Rename"
-        onclick={() => (renameModalState = "open")}
-        disabled={isPageLoading || selectedFiles.size > 0}
-      >
-        <img src="/icons/edit.svg" alt="" class="h-6 w-6" />
-      </button>
-      <button
-        class="btn btn-square"
-        aria-label="Delete"
+    {:else if viewType === "list"}
+      <Card.Root
+        id={entry.id.toString()}
+        role="button"
+        tabindex={0}
+        class="group relative w-full cursor-pointer transition-all 
+               outline-none ring-offset-background
+               focus-visible:ring-2 focus-visible:ring-ring
+               {isSelected ? 'ring-2 ring-primary ' : ''}"
+        onkeydown={handleKeyDown}
         onclick={(e) => {
-          e.stopPropagation();
-          onDeleteClick([entry.id]);
+          e.preventDefault();
+          if (entry.isDir)
+            nagivateToDir({
+              id: entry.id,
+              name: entry.name,
+            });
         }}
-        disabled={isPageLoading || selectedFiles.size > 0}
       >
-        <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
-      </button>
-    </div>
-  </div>
-{/if}
+        <Card.Content
+          class="flex items-center pl-2 pr-4 lg:flex justify-between gap-2"
+        >
+          <div class="flex items-center justify-center">
+            <Checkbox
+              onclick={(e) => e.stopPropagation()}
+              onchange={() => toggleSelection(entry.id)}
+              bind:checked={isSelected}
+              class="h-5 w-5 cursor-pointer opacity-50 duration-200 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 checked:opacity-100 {isSelected
+                ? 'opacity-100'
+                : ''}"
+            />
+          </div>
+
+          <div class="min-w-0 flex flex-1 items-center gap-2">
+            <div class="shrink-0">
+              {#if entry.isDir}
+                <FolderOutlineIcon
+                  class="h-8 w-8 opacity-50 transition-all duration-200 group-hover:opacity-80"
+                />
+              {:else}
+                <FileOutlineIcon
+                  class="h-8 w-8 opacity-50 transition-all duration-200 group-hover:opacity-80"
+                />
+              {/if}
+            </div>
+            <div class="min-w-0">
+              <span class="block truncate text-sm font-medium">
+                {entry.name}
+              </span>
+              {#if !entry.isDir && entry.mimeType}
+                <span class="block truncate text-xs text-muted-foreground">
+                  {entry.mimeType}
+                </span>
+              {/if}
+            </div>
+          </div>
+
+          <div class="text-xs flex flex-col text-end">
+            <span>
+              {entry.isDir
+                ? "FOLDER"
+                : new Date(entry.modifiedAt).toLocaleDateString()}
+            </span>
+            <span>
+              {!entry.isDir && entry.size
+                ? FileUtil.sizeToReadable(entry.size)
+                : ""}
+            </span>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/if}
+  </ContextMenu.Trigger>
+  <ContextMenu.Content class="w-52">
+    <ContextMenu.Label class="truncate text-sm">
+      {entry.name}
+    </ContextMenu.Label>
+    <ContextMenu.Separator />
+    <ContextMenu.Item>View</ContextMenu.Item>
+    <ContextMenu.Item onclick={() => (renameModalState = "open")}>
+      Rename
+    </ContextMenu.Item>
+    <ContextMenu.Item
+      variant="destructive"
+      onclick={() => onDeleteClick([entry.id])}
+    >
+      Delete
+    </ContextMenu.Item>
+  </ContextMenu.Content>
+</ContextMenu.Root>
 
 <Modal bind:modalState={renameModalState}>
   <form onsubmit={rename} class="modal-content">
@@ -328,7 +283,9 @@
       bind:value={renameValue}
       {focusOnMount}
     />
-    <span class="text-xs text-destructive break-all">{renameError}</span>
-    <Button disabled={isPageLoading} variant="outline">Rename</Button>
+    <span class="text-destructive break-all text-xs">{renameError}</span>
+    <Button disabled={isPageLoading} variant="outline" type="submit">
+      Rename
+    </Button>
   </form>
 </Modal>

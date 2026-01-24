@@ -5,9 +5,11 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			breadcrumbs?: BreadCrumbsEntry[];
+		}
 		// interface Platform {}
 	}
 }
 
-export {};
+export { };

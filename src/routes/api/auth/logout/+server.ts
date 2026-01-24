@@ -1,19 +1,13 @@
-import { json } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { COOKIES } from '$lib/types';
+import { COOKIES, ROUTES } from '$lib/types';
 import { Auth } from '$lib/server/auth';
 
 export const POST: RequestHandler = async ({ cookies }) => {
     const sessionCookie = cookies.get(COOKIES.session);
-
     Auth.deleteSessions([sessionCookie]);
 
-    cookies.set(COOKIES.session, '', {
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        maxAge: 0,
-    });
+    cookies.delete(COOKIES.session, { path: '/' });
 
-    return json(200, {});
+    throw redirect(302, ROUTES.home);
 };

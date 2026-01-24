@@ -56,7 +56,18 @@
     pageState === "loading" || pageState === "disruptiveLoading",
   );
 
-  onMount(async () => {
+  // Handle the back button
+  const handlePopState = (event: PopStateEvent) => {
+    // If we are deeper than the root folder, go back one level
+    if (BreadcrumbEntries.length > 1) {
+      // Remove the last breadcrumb (length - 2 is the index of the previous folder)
+      navigateBackFromBreadcrumb(BreadcrumbEntries.length - 2);
+    }
+  };
+
+  onMount(() => {
+    window.addEventListener("popstate", handlePopState);
+
     viewType = LocalStorageUtil.fsEntryViewMode;
 
     const cryptData = data.user.rootFolder.subFolders.find(
@@ -71,7 +82,11 @@
       },
     ];
 
-    await getCurrentDirData(true);
+    getCurrentDirData(true);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   });
 
   $effect(() => {
@@ -152,6 +167,8 @@
   };
 
   const nagivateToDir = (bcEntry: BreadCrumbsEntry) => {
+    history.pushState("", "");
+
     BreadcrumbEntries = [...BreadcrumbEntries, bcEntry];
     getCurrentDirData(true);
   };
