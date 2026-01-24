@@ -2,7 +2,7 @@ import { AUDIENCE, ISSUER, PRIVATE_KEY } from '$env/static/private';
 import { COOKIES, ROUTES } from '$lib/types';
 import crypto from 'node:crypto';
 import { V4 } from 'paseto';
-import { getSession } from './queries';
+import * as Queries from './queries';
 import { error, redirect, type Cookies } from '@sveltejs/kit';
 import { PUBLIC_ENV } from '$env/static/public';
 import { isRateLimited } from './utils/rateLimit';
@@ -63,10 +63,17 @@ export class Auth {
         const sessionCookie = cookies.get(COOKIES.session);
         if (!sessionCookie || sessionCookie == "") throw redirect(302, ROUTES.home);
 
-        const dbSession = getSession(sessionCookie);
+        const dbSession = Queries.getSession(sessionCookie);
         if (!dbSession) throw redirect(302, ROUTES.home);
 
         return dbSession;
+    }
+
+    static deleteSessions(sessionCookies: (string | undefined)[]) {
+        for (const sc of sessionCookies) {
+            if (!sc) continue;
+            Queries.deleteSessionByToken(sc);
+        }
     }
 
     static async checkRatelimit(request: Request, getClientAddress: () => string, strict?: boolean) {

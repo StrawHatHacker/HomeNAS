@@ -4,6 +4,7 @@
     type BreadCrumbsEntry,
     type FSEntries,
     type ModalState,
+    type PageState,
   } from "$lib/types";
   import { FileUtil } from "$lib/utils/fileUtil";
   import type { FSEntryViewMode } from "$lib/utils/localstorageUtil";
@@ -13,12 +14,18 @@
   import Modal from "./modal.svelte";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+  import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import Input from "$lib/components/ui/input/input.svelte";
+  import FolderOutlineIcon from "./icons/folderOutlineIcon.svelte";
+  import FileOutlineIcon from "./icons/fileOutlineIcon.svelte";
 
   let {
     entry,
     selectedFiles,
     toggleSelection,
     pageState = $bindable(),
+    isPageLoading,
     relativePathToCrypt,
     viewType,
     onRename,
@@ -28,7 +35,8 @@
     entry: FSEntries[0];
     selectedFiles: SvelteSet<number>;
     toggleSelection: (id: number) => void;
-    pageState: "initLoading" | "loading" | "loaded";
+    pageState: PageState;
+    isPageLoading: boolean;
     relativePathToCrypt: string[];
     viewType: FSEntryViewMode;
     onRename: (fsEntryId: number, newName: string) => void;
@@ -46,12 +54,6 @@
   onMount(() => {
     renameValue = entry.name;
   });
-
-  function handleRightClick(e: MouseEvent) {
-    e.preventDefault();
-    if (selectedFiles.size > 0) return;
-    isFlipped = !isFlipped;
-  }
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
@@ -110,85 +112,103 @@
 </script>
 
 {#if viewType === "grid"}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <Card.Root
-    id={entry.id.toString()}
-    role="button"
-    class="h-56 cursor-pointer relative p-0 overflow-clip group"
-    oncontextmenu={handleRightClick}
-    onkeydown={handleKeyDown}
-    onclick={(e) => {
-      e.stopPropagation();
-      if (entry.isDir)
-        nagivateToDir({
-          id: entry.id,
-          name: entry.name,
-        });
-    }}
-  >
-    <Checkbox
-      onclick={(e) => e.stopPropagation()}
-      onchange={(e) => {
-      console.log(1);
-      
-        toggleSelection(entry.id);
-      }}
-      bind:checked={isSelected}
-      class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer"
-    />
-
-    <Card.Content class="flex flex-col h-full p-3 ">
-      <!-- Icon Section (Top Half) -->
-      <div
-        class="h-9/20 w-full flex items-center justify-center flex-col gap-2"
+  <ContextMenu.Root>
+    <ContextMenu.Trigger>
+      <Card.Root
+        id={entry.id.toString()}
+        role="button"
+        class="h-56 cursor-pointer relative p-0 group"
+        onkeydown={handleKeyDown}
+        onclick={() => {
+          if (entry.isDir)
+            nagivateToDir({
+              id: entry.id,
+              name: entry.name,
+            });
+        }}
       >
-        <img
-          src={entry.isDir ? "/icons/folder.svg" : "/icons/fileOutlined.svg"}
-          alt=""
-          class="h-12 w-12 transition-all duration-300 opacity-50 group-hover:opacity-80"
+        <Checkbox
+          onclick={(e) => e.stopPropagation()}
+          onchange={() => toggleSelection(entry.id)}
+          bind:checked={isSelected}
+          class="absolute top-2 left-2 z-10 h-4 w-4 opacity-0 group-hover:opacity-100 group-visible:opacity-100 checked:opacity-100 transition-opacity cursor-pointer
+          {isSelected ? 'opacity-100' : ''}"
         />
-        <!-- TODO show proper file icon PDF for pdf, img icons for images etc -->
-        <!-- {#if !entry.isDir && entry.ext}
-        <span
-          class="text-muted-foreground font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
-        >
-          {entry.ext}
-        </span>
-      {/if} -->
-      </div>
 
-      <div class="flex flex-col justify-between h-11/20 gap-1">
-        <p
-          class="text-sm line-clamp-3 break-all"
-          class:text-xs={entry.name.length > 30}
-        >
-          {entry.name}
-        </p>
-
-        <div class="flex flex-col gap-1 text-xs">
-          {#if !entry.isDir && entry.mimeType}
-            <span class="line-clamp-1 break-all text-muted-foreground">
-              {entry.mimeType}
-            </span>
-          {/if}
-
-          <div class="flex justify-between items-center">
-            <span class="text-xs">
-              {entry.isDir
-                ? "FOLDER"
-                : new Date(entry.modifiedAt).toLocaleDateString()}
-            </span>
-
-            {#if !entry.isDir && entry.size}
-              <span>
-                {FileUtil.sizeToReadable(entry.size)}
-              </span>
+        <Card.Content class="flex flex-col h-full p-3">
+          <div
+            class="h-9/20 w-full flex items-center justify-center flex-col gap-2"
+          >
+            {#if entry.isDir}
+              <FolderOutlineIcon
+                class="h-12 w-12 transition-all duration-300 opacity-50 group-hover:opacity-80"
+              />
+            {:else}
+              <FileOutlineIcon
+                class="h-12 w-12 transition-all duration-300 opacity-50 group-hover:opacity-80"
+              />
             {/if}
+
+            <!-- TODO show proper file icon PDF for pdf, img icons for images etc -->
+            <!-- {#if !entry.isDir && entry.ext}
+            <span
+              class="text-muted-foreground font-bold text-xs group-hover:text-(--lighter-grey) transition-all duration-300"
+            >
+              {entry.ext}
+            </span>
+          {/if} -->
           </div>
-        </div>
-      </div>
-    </Card.Content>
-  </Card.Root>
+
+          <div class="flex flex-col justify-between h-11/20 gap-1">
+            <p
+              class="text-sm line-clamp-3 break-all"
+              class:text-xs={entry.name.length > 30}
+            >
+              {entry.name}
+            </p>
+
+            <div class="flex flex-col gap-1 text-xs">
+              {#if !entry.isDir && entry.mimeType}
+                <span class="line-clamp-1 break-all text-muted-foreground">
+                  {entry.mimeType}
+                </span>
+              {/if}
+
+              <div class="flex justify-between items-center">
+                <span class="text-xs">
+                  {entry.isDir
+                    ? "FOLDER"
+                    : new Date(entry.modifiedAt).toLocaleDateString()}
+                </span>
+
+                {#if !entry.isDir && entry.size}
+                  <span>
+                    {FileUtil.sizeToReadable(entry.size)}
+                  </span>
+                {/if}
+              </div>
+            </div>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    </ContextMenu.Trigger>
+    <ContextMenu.Content class="w-52">
+      <ContextMenu.Label class="text-sm truncate">
+        {entry.name}
+      </ContextMenu.Label>
+      <ContextMenu.Separator />
+      <ContextMenu.Item>View</ContextMenu.Item>
+      <ContextMenu.Item onclick={() => (renameModalState = "open")}>
+        Rename
+      </ContextMenu.Item>
+      <ContextMenu.Item
+        variant="destructive"
+        onclick={() => onDeleteClick([entry.id])}
+      >
+        Delete
+      </ContextMenu.Item>
+    </ContextMenu.Content>
+  </ContextMenu.Root>
 {:else if viewType === "list"}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -280,9 +300,7 @@
         class="btn btn-square"
         aria-label="Rename"
         onclick={() => (renameModalState = "open")}
-        disabled={pageState === "initLoading" ||
-          pageState === "loading" ||
-          selectedFiles.size > 0}
+        disabled={isPageLoading || selectedFiles.size > 0}
       >
         <img src="/icons/edit.svg" alt="" class="h-6 w-6" />
       </button>
@@ -293,9 +311,7 @@
           e.stopPropagation();
           onDeleteClick([entry.id]);
         }}
-        disabled={pageState === "initLoading" ||
-          pageState === "loading" ||
-          selectedFiles.size > 0}
+        disabled={isPageLoading || selectedFiles.size > 0}
       >
         <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
       </button>
@@ -304,16 +320,15 @@
 {/if}
 
 <Modal bind:modalState={renameModalState}>
-  <form onsubmit={rename} class="flex flex-col gap-2">
-    <h2 class="text-start">Rename: {entry.name}</h2>
-    <!-- svelte-ignore a11y_autofocus -->
-    <input
+  <form onsubmit={rename} class="modal-content">
+    <h2 class="modal-title">Rename {entry.name}</h2>
+    <Input
       type="text"
       placeholder="New name"
       bind:value={renameValue}
-      use:focusOnMount
+      {focusOnMount}
     />
-    <span class="text-xs text-(--clr-error) break-all">{renameError}</span>
-    <!-- <Button loading={pageState === "loading"} classes="w-full">Rename</Button> -->
+    <span class="text-xs text-destructive break-all">{renameError}</span>
+    <Button disabled={isPageLoading} variant="outline">Rename</Button>
   </form>
 </Modal>

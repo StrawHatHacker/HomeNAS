@@ -35,3 +35,5 @@ export type BreadCrumbsEntry = {
 export type FSEntries = ReturnType<typeof getFSEntriesOfDir>;
 
 export type ModalState = 'open' | 'closed' | 'loading';
+
+export type PageState = 'disruptiveLoading' | 'loading' | 'loaded';

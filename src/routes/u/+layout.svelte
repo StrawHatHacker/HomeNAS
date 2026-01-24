@@ -4,7 +4,9 @@
   import type { Component } from "svelte";
   import { isSidebarCollapsed, isMobileOpen } from "$lib/stores/sidebar";
   import UploadingProgress from "$lib/widgets/uploadingProgress.svelte";
-  import Button, { buttonVariants } from "$lib/components/ui/button/button.svelte";
+  import Button, {
+    buttonVariants,
+  } from "$lib/components/ui/button/button.svelte";
   import ExpandIcon from "$lib/widgets/icons/expandIcon.svelte";
   import CollapseIcon from "$lib/widgets/icons/collapseIcon.svelte";
   import FileIcon from "$lib/widgets/icons/fileIcon.svelte";
@@ -26,7 +28,6 @@
         href: ROUTES.crypt,
       },
     ],
-  
   };
 
   const toggleSidebarCollape = () =>
@@ -34,6 +35,14 @@
   const toggleMobile = () => isMobileOpen.update((value) => !value);
   const isActive = (href: string) =>
     page.url.pathname === href || page.url.pathname.startsWith(href + "/");
+
+  const logout = () => {
+    fetch("/api/auth/logout", {
+      method: "POST",
+    }).then(() => {
+      window.location.href = "/";
+    });
+  };
 </script>
 
 <UploadingProgress />
@@ -63,7 +72,7 @@
         onclick={toggleSidebarCollape}
         class="hidden md:inline-flex"
         variant="outline"
-        size="icon-sm"
+        size="icon-lg"
         aria-label={$isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {#if $isSidebarCollapsed}
@@ -127,13 +136,17 @@
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           <div
-            class="flex h-12 w-full p-2 items-center {$isSidebarCollapsed &&
-            !$isMobileOpen
+            class="flex h-12 w-full p-2 items-center
+             {$isSidebarCollapsed && !$isMobileOpen
               ? 'justify-center'
-              : 'justify-start gap-2'} {buttonVariants.base} {buttonVariants.variants.variant.ghost}"
+              : 'justify-start gap-2'}
+              {buttonVariants({
+              variant: 'ghost',
+            })}
+            "
           >
             <div
-              class="rounded-full bg-primary-foreground h-8 w-8 grid items-center"
+              class="rounded-full bg-secondary text-secondary-foreground h-8 w-8 grid items-center"
             >
               {data.user.name.slice(0, 1)}
             </div>
@@ -173,9 +186,9 @@
           <DropdownMenu.Separator />
           <DropdownMenu.Group>
             <DropdownMenu.Item>Settings</DropdownMenu.Item>
-            <DropdownMenu.Item class="text-destructive"
-              >Logout</DropdownMenu.Item
-            >
+            <DropdownMenu.Item class="text-destructive" onclick={logout}>
+              Logout
+            </DropdownMenu.Item>
           </DropdownMenu.Group>
         </DropdownMenu.Content>
       </DropdownMenu.Root>

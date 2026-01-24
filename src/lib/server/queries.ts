@@ -1,6 +1,9 @@
 import { USER_FOLDERS_TYPES, type User, type UserFolderType } from "$lib/types";
 import { db } from "./providers/db";
 
+const deleteSessionByTokenQuery = db.prepare(`DELETE FROM sessions WHERE token = ?`);
+export const deleteSessionByToken = (id: string) => deleteSessionByTokenQuery.run(id);
+
 const getFSEntriesByIdQuery = db.prepare(
     `SELECT id, name, is_dir
     FROM fs_entries 

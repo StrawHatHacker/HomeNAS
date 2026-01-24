@@ -76,7 +76,7 @@
   </h1>
 
   <div id="terminal" class="mx-6">
-    <p class="text-sm lg:text-md mono">
+    <p class="text-sm lg:text-base mono">
       {#if messageDisplay != ""}
         <Typewriter text={messageDisplay} />
       {:else}

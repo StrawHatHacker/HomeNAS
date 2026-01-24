@@ -5,6 +5,7 @@
     type BreadCrumbsEntry,
     type FSEntries,
     type ModalState,
+    type PageState,
   } from "$lib/types.js";
   import {
     LocalStorageUtil,
@@ -20,6 +21,11 @@
   import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { StringUtil } from "$lib/utils/stringUtil.js";
+  import BinIcon from "$lib/widgets/icons/binIcon.svelte";
+  import UploadIcon from "$lib/widgets/icons/uploadIcon.svelte";
+  import AddFolderIcon from "$lib/widgets/icons/addFolderIcon.svelte";
+  import GridIcon from "$lib/widgets/icons/gridIcon.svelte";
+  import ListIcon from "$lib/widgets/icons/listIcon.svelte";
 
   let { data } = $props();
 
@@ -29,9 +35,7 @@
   );
 
   // 'disruptiveLoading' shows "Loading..." and 'loading' just disables the UI
-  let pageState = $state<"disruptiveLoading" | "loading" | "loaded">(
-    "disruptiveLoading",
-  );
+  let pageState = $state<PageState>("disruptiveLoading");
   let selectedFSEntries = $state(new SvelteSet<number>());
   let BreadcrumbEntries = $state<BreadCrumbsEntry[]>([]);
   let fsEntries = $state<FSEntries>([]);
@@ -40,7 +44,6 @@
   let createDirModalState = $state<ModalState>("closed");
   let createDirError = $state("");
   let deleteFSEntriesModalState = $state<ModalState>("closed");
-  let deleteFSEntriesError = $state("");
 
   let lastBreadcrumbEntry = $derived(
     BreadcrumbEntries[BreadcrumbEntries.length - 1],
@@ -69,6 +72,11 @@
     ];
 
     await getCurrentDirData(true);
+  });
+
+  $effect(() => {
+    // When modal closes reset the input value
+    createDirModalState === "closed" && (createDirValue = "");
   });
 
   const onFilesAdded = async (files: FileList) => {
@@ -260,38 +268,40 @@
 </svelte:head>
 
 <Modal bind:modalState={createDirModalState}>
-  <form onsubmit={createFolder} class="flex flex-col gap-2">
-    <h2 class="text-start">Create Folder</h2>
-    <input
+  <form onsubmit={createFolder} class="modal-content">
+    <h2 class="modal-title">Create Folder</h2>
+    <Input
       type="text"
       placeholder="Folder name"
       bind:value={createDirValue}
-      use:focusOnMount
+      {focusOnMount}
     />
-    <span class="text-xs text-(--clr-error) break-all">{createDirError}</span>
-    <!-- <Button loading={pageState === "loading"} classes="w-full">Create</Button> -->
+    <span class="text-xs text-destructive break-all">{createDirError}</span>
+    <Button disabled={isPageLoading} variant="outline">Create</Button>
   </form>
 </Modal>
 
 <Modal bind:modalState={deleteFSEntriesModalState}>
-  <h2>
-    Are you sure you want to permanently delete
-    {selectedFSEntries.size > 1 ? "these" : "this"}
-    file{selectedFSEntries.size > 1 ? "s" : ""}?
-  </h2>
-  {#each selectedFSEntries as slId}
-    {@const sl = fsEntries.find((e) => e.id === slId)}
-    <p class="text-sm text-(--terminal-green)">{sl?.name}</p>
-  {/each}
-  <button
-    class="btn w-full"
-    onclick={() => {
+  <form
+    class="modal-content"
+    onsubmit={() => {
       deleteFSEntries(Array.from(selectedFSEntries));
       deleteFSEntriesModalState = "closed";
     }}
   >
-    Delete
-  </button>
+    <h2 class="modal-title">
+      Are you sure you want to permanently delete
+      {selectedFSEntries.size > 1 ? "these" : "this"}
+      file{selectedFSEntries.size > 1 ? "s" : ""}?
+    </h2>
+    <div class="flex flex-col">
+      {#each selectedFSEntries as slId}
+        {@const sl = fsEntries.find((e) => e.id === slId)}
+        <span class="text-sm text-muted-foreground text-start">{sl?.name}</span>
+      {/each}
+    </div>
+    <Button disabled={isPageLoading} variant="outline">Delete</Button>
+  </form>
 </Modal>
 
 {#snippet title()}
@@ -321,8 +331,7 @@
           onclick={() => (deleteFSEntriesModalState = "open")}
           disabled={isPageLoading}
         >
-        <!-- TODO change the icons to .svelte -->
-          <img src="/icons/bin.svg" alt="" class="h-6 w-6" />
+          <BinIcon />
         </Button>
       </ButtonGroup.Root>
       <div class="w-full"></div>
@@ -352,7 +361,7 @@
           variant="outline"
           size="icon-lg"
         >
-          <img src="/icons/upload.svg" alt="" class="h-6 w-6" />
+          <UploadIcon />
         </Button>
         <Button
           onclick={() => (createDirModalState = "open")}
@@ -360,7 +369,7 @@
           variant="outline"
           size="icon-lg"
         >
-          <img src="/icons/addFolder.svg" alt="" class="h-6 w-6" />
+          <AddFolderIcon />
         </Button>
       </ButtonGroup.Root>
       <div class="w-full"></div>
@@ -371,11 +380,11 @@
           variant="outline"
           size="icon-lg"
         >
-          <img
-            src={viewType === "grid" ? "/icons/grid.svg" : "/icons/list.svg"}
-            alt="grid and list switch"
-            class="h-6 w-6"
-          />
+          {#if viewType === "grid"}
+            <GridIcon />
+          {:else}
+            <ListIcon />
+          {/if}
         </Button>
       </ButtonGroup.Root>
     {/if}
@@ -383,7 +392,7 @@
 
   <div
     id="breadcrumbs"
-    class="flex flex-wrap gap-2 text-(--lighter-grey) text-sm py-4"
+    class="flex flex-wrap gap-2 text-muted-foreground text-sm py-4"
   >
     {#each BreadcrumbEntries as entry, i}
       {@const isLast = i === BreadcrumbEntries.length - 1}
@@ -412,7 +421,7 @@
   </div>
   <div id="dir-contents-container">
     {#if pageState === "disruptiveLoading"}
-      <div class="text-md text-(--lighter-grey) text-center">Loading...</div>
+      <div class="text-base text-muted-foreground text-center">Loading...</div>
     {:else if fsEntries}
       <div
         id="files"
@@ -433,12 +442,13 @@
               {onDeleteClick}
               {nagivateToDir}
               bind:pageState
+              {isPageLoading}
             />
           {/if}
         {/each}
       </div>
     {:else}
-      <div class="text-md text-(--lighter-grey) text-center">
+      <div class="text-base text-muted-foreground text-center">
         No files found
       </div>
     {/if}
