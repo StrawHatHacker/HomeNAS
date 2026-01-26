@@ -1,12 +1,7 @@
 <script lang="ts">
+  import Button from "$lib/components/ui/button/button.svelte";
   import { isMobileOpen } from "$lib/stores/sidebar";
   import { onMount, type Snippet } from "svelte";
-  import SunIcon from "@lucide/svelte/icons/sun";
-  import MoonIcon from "@lucide/svelte/icons/moon";
-  import { Input } from "$lib/components/ui/input/index.js";
-
-  import { toggleMode } from "mode-watcher";
-  import { Button } from "$lib/components/ui/button/index.js";
 
   let {
     title,
@@ -69,13 +64,15 @@
 </script>
 
 <main class="flex-1 overflow-y-hidden">
-  <div class="h-18 border-b border-border px-4 flex items-center gap-2">
-    <button
+  <div class="h-18 border-b border-border p-2 flex items-center gap-2">
+    <Button
       onclick={toggleMobile}
-      class="md:hidden p-2 hover:bg-(--normal-grey) rounded-md"
+      class="md:hidden"
+      variant="outline"
+      size="icon-lg"
     >
       <img src="/icons/menu.svg" alt="Menu" class="h-6 w-6" />
-    </button>
+    </Button>
     <div class="flex flex-col flex-1">
       {@render title()}
     </div>
@@ -85,7 +82,7 @@
   </div>
   <div
     id="main-drop-zone"
-    class="w-full h-full overflow-y-auto p-4"
+    class="w-full h-full overflow-y-auto py-4 px-2 md:px-4"
     bind:this={dropZone}
   >
     {@render content(openFileExplorer)}
@@ -102,6 +99,6 @@
 
 <style>
   :global(#main-drop-zone.drag-over) {
-    background: var(--dark-grey);
+    background: var(--muted);
   }
 </style>

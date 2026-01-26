@@ -15,6 +15,7 @@
   import CloseIcon from "$lib/widgets/icons/closeIcon.svelte";
   import { setMode } from "mode-watcher";
   import { StringUtil } from "$lib/utils/stringUtil.js";
+  import LockIcon from "$lib/widgets/icons/lockIcon.svelte";
 
   let { data, children } = $props();
 
@@ -26,6 +27,11 @@
         name: StringUtil.capitalizeFirst(USER_FOLDERS_TYPES.crypt),
         icon: FileIcon,
         href: ROUTES.crypt,
+      },
+      {
+        name: StringUtil.capitalizeFirst(USER_FOLDERS_TYPES.encrypted),
+        icon: LockIcon,
+        href: ROUTES.encrypted,
       },
     ],
   };
